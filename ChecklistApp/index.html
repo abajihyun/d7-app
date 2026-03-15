@@ -9,10 +9,8 @@
   <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
   <title>D7 비자 플래너</title>
 
-  <!-- React + ReactDOM (production) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <!-- Babel standalone: transpiles JSX in-browser -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
@@ -21,9 +19,6 @@
     @media (prefers-color-scheme: dark) { html, body { background: #000; } }
     ::-webkit-scrollbar { display: none; }
     body { -webkit-font-smoothing: antialiased; }
-    /* Prevent date input calendar icon messing layout */
-    input[type="date"]::-webkit-inner-spin-button,
-    input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; position: absolute; right: 0; width: 100%; height: 100%; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -261,64 +256,54 @@ function formatDate(dateStr, lang) {
 }
 
 // ─── INLINE DEADLINE CONTROL ─────────────────────────────────────
-// Renders either:
-//  • a grey "+" chip (no deadline set) → clicking opens the hidden date input
-//  • a colored date chip (deadline set) → clicking opens the hidden date input to change/remove
+// The date input is hidden behind the chip label.
+// <label htmlFor> ties the chip directly to the input — no showPicker(), no ref.
+// This satisfies the browser's "user gesture" requirement on all platforms.
 function InlineDeadline({ itemId, dateStr, lang, t, onSave, onRemove }) {
-  const inputRef = useRef(null);
-  const days = daysUntil(dateStr);
+  const inputId = `dl-${itemId}`;
+  const days    = daysUntil(dateStr);
   const overdue = days !== null && days < 0;
-  const isToday  = days === 0;
-  const urgent   = days !== null && days > 0 && days <= 14;
-
-  const openPicker = (e) => {
-    e.stopPropagation();
-    inputRef.current?.showPicker?.();
-    inputRef.current?.click();
-  };
-
-  const handleChange = (e) => {
-    e.stopPropagation();
-    const val = e.target.value;
-    if (val) onSave(itemId, val);
-  };
-
-  // Chip appearance
+  const isToday = days === 0;
+  const urgent  = days !== null && days > 0 && days <= 14;
   const hasDate = !!dateStr;
-  const chipColor = !hasDate ? "var(--label-tertiary)"
-    : overdue ? "var(--destructive)"
-    : (isToday || urgent) ? "#FF9500"
-    : "var(--label-tertiary)";
-  const chipBg = !hasDate ? "var(--bg-secondary)"
-    : overdue ? "var(--destructive-bg)"
-    : (isToday || urgent) ? "rgba(255,149,0,0.12)"
-    : "var(--bg-secondary)";
 
-  const chipLabel = !hasDate ? `+ ${t.setDeadline}`
-    : overdue ? `⏰ ${t.overdue}`
-    : isToday  ? `⏰ ${t.today}`
-    : urgent   ? `⏰ ${days}${t.daysLeft}`
-    : `📅 ${formatDate(dateStr, lang)}`;
+  const chipColor = !hasDate        ? "var(--label-tertiary)"
+    : overdue                       ? "var(--destructive)"
+    : (isToday || urgent)           ? "#FF9500"
+    :                                 "var(--label-tertiary)";
+
+  const chipBg = !hasDate           ? "var(--bg-secondary)"
+    : overdue                       ? "var(--destructive-bg)"
+    : (isToday || urgent)           ? "rgba(255,149,0,0.12)"
+    :                                 "var(--bg-secondary)";
+
+  const chipLabel = !hasDate        ? `+ ${t.setDeadline}`
+    : overdue                       ? `⏰ ${t.overdue}`
+    : isToday                       ? `⏰ ${t.today}`
+    : urgent                        ? `⏰ ${days}${t.daysLeft}`
+    :                                 `📅 ${formatDate(dateStr, lang)}`;
 
   return (
-    <span style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 2 }}>
-      {/* Visible chip */}
-      <button
-        onClick={openPicker}
+    <span
+      onClick={(e) => e.stopPropagation()}
+      style={{ display: "inline-flex", alignItems: "center", gap: 2 }}
+    >
+      {/* The label IS the chip — clicking it natively opens the date picker */}
+      <label
+        htmlFor={inputId}
         style={{
           display: "inline-flex", alignItems: "center",
-          background: chipBg, border: "none",
-          borderRadius: 6, padding: "2px 7px",
+          background: chipBg, borderRadius: 6, padding: "2px 7px",
           cursor: "pointer", lineHeight: 1.5,
           fontSize: 11, fontWeight: hasDate ? 500 : 400,
-          color: chipColor,
-          transition: "background 0.15s",
+          color: chipColor, transition: "background 0.15s",
+          userSelect: "none",
         }}
       >
         {chipLabel}
-      </button>
+      </label>
 
-      {/* Remove "×" — only when date is set */}
+      {/* × remove button — only shown when a date is already set */}
       {hasDate && (
         <button
           onClick={(e) => { e.stopPropagation(); onRemove(itemId); }}
@@ -335,18 +320,17 @@ function InlineDeadline({ itemId, dateStr, lang, t, onSave, onRemove }) {
         </button>
       )}
 
-      {/* Hidden native date input — zero-size, off-screen, triggered by chip click */}
+      {/* The actual date input — visually hidden, triggered by the label above */}
       <input
-        ref={inputRef}
+        id={inputId}
         type="date"
-        defaultValue={dateStr || ""}
-        onChange={handleChange}
+        value={dateStr || ""}
+        onChange={(e) => { if (e.target.value) onSave(itemId, e.target.value); }}
         onClick={(e) => e.stopPropagation()}
         style={{
           position: "absolute",
-          top: 0, left: 0,
-          width: 1, height: 1,
-          opacity: 0, overflow: "hidden",
+          width: 0, height: 0,
+          opacity: 0, border: "none", padding: 0,
           pointerEvents: "none",
         }}
       />
@@ -780,7 +764,6 @@ function App() {
   );
 }
 
-    // Mount
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(React.createElement(App));
   </script>
