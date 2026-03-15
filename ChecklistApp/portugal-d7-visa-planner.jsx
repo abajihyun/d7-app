@@ -1,0 +1,748 @@
+import { useState, useEffect, useCallback, useRef } from "react";
+
+// ─── i18n ────────────────────────────────────────────────────────
+const T = {
+  ko: {
+    appTitle: "D7 비자 플래너",
+    appSub: "포르투갈 이민 준비 · 지현 & 브루노",
+    of: "/", complete: "완료",
+    filterAll: "전체", filterApostille: "공증 필요", filterDeadline: "마감 있음",
+    apostille: "아포스티유", translation: "번역공증", critical: "핵심 서류",
+    ownerLabels: { jihyun: "지현", bruno: "브루노", both: "함께", online: "온라인", embassy: "대사관" },
+    phases: [
+      { title: "기초 준비", sub: "한국 퇴사 & 사전 준비" },
+      { title: "비자 신청", sub: "대사관 접수 & 심사" },
+      { title: "정착 시작", sub: "포르투갈 입국 후 4개월" },
+    ],
+    toastComplete: "단계 완료 🎉",
+    updated: "최종 업데이트: 2025년 3월",
+    requires: "선행 조건",
+    setDeadline: "마감일 추가",
+    editDeadline: "수정",
+    removeDeadline: "삭제",
+    daysLeft: "일 남음",
+    overdue: "마감 초과",
+    today: "오늘 마감",
+    notifRequest: "마감 임박 알림을 허용하시겠어요?",
+    notifAllow: "허용",
+    notifDeny: "나중에",
+    notifTitle: "D7 비자 마감 임박",
+    notifBody: (title, days) => `"${title}" 마감까지 ${days}일 남았습니다.`,
+    emptyFilter: "해당 항목이 없습니다",
+    save: "저장",
+    cancel: "취소",
+    deadlineFor: "마감일 설정",
+    urgentBanner: (n) => `마감 임박 항목 ${n}개`,
+  },
+  en: {
+    appTitle: "D7 Visa Planner",
+    appSub: "Portugal Immigration · Jihyun & Bruno",
+    of: "/", complete: "done",
+    filterAll: "All", filterApostille: "Notarization", filterDeadline: "Has deadline",
+    apostille: "Apostille", translation: "Translation", critical: "Critical",
+    ownerLabels: { jihyun: "Jihyun", bruno: "Bruno", both: "Together", online: "Online", embassy: "Embassy" },
+    phases: [
+      { title: "Foundation", sub: "Korea prep & documents" },
+      { title: "Gateway", sub: "Embassy application" },
+      { title: "Arrival", sub: "First 4 months in Portugal" },
+    ],
+    toastComplete: "Phase complete 🎉",
+    updated: "Last updated: March 2025",
+    requires: "Requires",
+    setDeadline: "Add deadline",
+    editDeadline: "Edit",
+    removeDeadline: "Remove",
+    daysLeft: "days left",
+    overdue: "Overdue",
+    today: "Due today",
+    notifRequest: "Allow deadline notifications?",
+    notifAllow: "Allow",
+    notifDeny: "Later",
+    notifTitle: "D7 Visa Deadline",
+    notifBody: (title, days) => `"${title}" is due in ${days} days.`,
+    emptyFilter: "No items match this filter",
+    save: "Save",
+    cancel: "Cancel",
+    deadlineFor: "Set deadline",
+    urgentBanner: (n) => `${n} item${n > 1 ? "s" : ""} due soon`,
+  },
+};
+
+// ─── DATA ────────────────────────────────────────────────────────
+const PHASES = [
+  {
+    id: 0,
+    collections: [
+      {
+        id: "company", title: { ko: "🏢 회사 정리", en: "🏢 Company & HR" },
+        items: [
+          { id: "c1", title: { ko: "사이닝보너스 소득세 환급 요청", en: "Signing bonus tax refund request" }, detail: { ko: "HR/재무팀에 '퇴사 시 보너스 반납 → 중도퇴사 연말정산에서 소득 차감' 반영 요청. 비협조 시 다음 해 5월 경정청구. 필요 서류: 근로계약서, 반환 영수증, 수정 원천징수영수증.", en: "Ask HR to reflect signing bonus repayment in year-end settlement. If uncooperative, file amended return next May. Docs: employment contract, repayment receipt, revised withholding statement." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "c2", title: { ko: "건강보험 임의계속가입 신청", en: "Apply for voluntary health insurance continuation" }, detail: { ko: "퇴사 후 지역가입자 고지서 받은 날로부터 2개월 이내 국민건강보험공단 신청. 월 약 36만원 유지 (지역 전환 시 60~70만원). 포르투갈 3개월 이상 체류 시 면제/50% 감면 신청 가능.", en: "Apply to NHIS within 2 months of receiving regional subscriber notice. ~₩360k/month (vs ₩600–700k regional). Exemption/50% reduction after 3+ months in Portugal." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "c3", title: { ko: "국민연금 납부예외 신청", en: "Apply for National Pension payment exemption" }, detail: { ko: "퇴사 직후 소득 없는 기간 국민연금공단에 납부예외 신청. 월 약 57만원 절감. 임대소득은 다음 해 5월 종합소득세 신고 후 공단에 노출됨.", en: "Apply to NPS for payment exemption during income-free period. Saves ~₩570k/month. Rental income reported to NPS after next May's tax filing." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "c4", title: { ko: "4대보험 및 보너스 반환 금액 최종 확인", en: "Final check: social insurance & bonus repayment" }, detail: { ko: "보너스 1,200만원 전체 vs. 근무기간 비례 반환 여부 계약서 재확인. 소득세 외 4대보험료도 정산. 지방소득세(소득세의 10%)도 자동 환급 대상.", en: "Re-confirm full ₩12M vs. pro-rated repayment. Settle social insurance premiums. Local income tax (10% of income tax) also refunded." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+        ],
+      },
+      {
+        id: "nif", title: { ko: "🔢 NIF & 포르투갈 은행", en: "🔢 NIF & Portuguese Bank" },
+        items: [
+          { id: "n1", title: { ko: "NIF (납세자 번호) 원격 발급", en: "Get NIF (Tax ID) remotely" }, detail: { ko: "추천 대행사: Bordr.io (€99~129), GetNIFPortugal (€79), AnchorLess (€100~150). 여권 스캔 + 영문 주민등록등본 업로드 → 1~2주 내 PDF 수신.", en: "Recommended: Bordr.io (€99–129), GetNIFPortugal (€79), AnchorLess (€100–150). Upload passport + English residence cert → PDF in 1–2 weeks." }, owner: "online", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "n2", title: { ko: "영문 주민등록등본 발급", en: "Get English certificate of residence" }, detail: { ko: "정부24에서 영문 발급. NIF 신청 시 한국 주소 증빙 서류로 제출. 아포스티유 필요.", en: "Obtain from Government24 in English. Required as address proof for NIF application. Apostille needed." }, owner: "jihyun", apostille: true, translation: false, critical: false, dependsOn: [] },
+          { id: "n3", title: { ko: "포르투갈 은행 계좌 비대면 개설", en: "Open Portuguese bank account remotely" }, detail: { ko: "Millennium BCP 또는 Banco Atlântico 추천. NIF 발급 후 화상 인터뷰 또는 서류 우편 제출. 추가 서류: NIF 증명서 + 영문 소득금액증명원.", en: "Recommended: Millennium BCP or Banco Atlântico. After NIF: video interview or mail documents. Additional: NIF certificate + English income certificate." }, owner: "online", apostille: false, translation: false, critical: false, dependsOn: ["n1"] },
+          { id: "n4", title: { ko: "한국 → 포르투갈 송금 & 잔고 확보", en: "Transfer funds to Portuguese account" }, detail: { ko: "계좌 개설 후 1년치 생활비 송금 (최소 €10,000~15,000 권장). 한 번에 €10,000 이하 시 외환신고 불필요. '해외거주비' 사유로 송금.", en: "Transfer 1 year of living expenses (min €10,000–15,000). No forex reporting for transfers under €10k. Use 'overseas living expenses' as reason." }, owner: "online", apostille: false, translation: false, critical: false, dependsOn: ["n3"] },
+        ],
+      },
+      {
+        id: "docs", title: { ko: "🏛️ 대사관 제출 서류", en: "🏛️ Embassy Submission Documents" },
+        items: [
+          { id: "d1", title: { ko: "여권 — 유효기간 6개월+, 빈 페이지 2장", en: "Passport — valid 6+ months, 2+ blank pages" }, detail: { ko: "비자 신청일 기준 유효기간 6개월 이상. 여권 앞뒤 복사본 포함.", en: "Valid 6+ months from application date. Include front/back copies." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "d2", title: { ko: "D7 비자 신청서 (Visto Nacional 양식)", en: "D7 Visa application form (Visto Nacional)" }, detail: { ko: "대사관 공식 양식 다운로드 후 영문 타이핑 작성 및 자필 서명.", en: "Download official embassy form, type in English, sign by hand." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "d3", title: { ko: "수동소득 증빙 서류 일체", en: "Passive income proof documents" }, detail: { ko: "① 임대계약서 ② 월세 입금 내역(3~6개월 통장) ③ 소득금액증명원(세무서) ④ 보증금 영수증 ⑤ 부동산 등기부등본. 월 €870(약 146만원) 이상 증명 필요. 번역+공증+아포스티유 필수.", en: "① Lease contract ② Rent records (3–6 months) ③ Income certificate ④ Deposit receipt ⑤ Property registry. Must prove €870+/month. Translation + notarization + apostille required." }, owner: "jihyun", apostille: true, translation: true, critical: true, dependsOn: [] },
+          { id: "d4", title: { ko: "포르투갈 은행 잔고 증명서", en: "Portuguese bank balance certificate" }, detail: { ko: "최소 €10,000~15,000 이상 권장. NIF 발급 → 계좌 개설 → 송금 완료 후 영문 발급. 아포스티유 필요.", en: "Min €10,000–15,000 recommended. Get in English after NIF → account → transfer complete. Apostille required." }, owner: "online", apostille: true, translation: false, critical: true, dependsOn: ["n4"] },
+          { id: "d5", title: { ko: "포르투갈 거주지 임대차 계약서", en: "Portuguese rental contract" }, detail: { ko: "최소 12개월 계약. 포르투갈 세무서(Finanças) 정식 등록 필수. 파트너 집 동거 시: Aditamento(공동임차인 등록) 또는 Termo de Responsabilidade(포르투갈어 공증) 중 선택.", en: "Min 12-month contract. Must be officially registered with Finanças. If living with partner: Aditamento (co-tenant) or Termo de Responsabilidade (notarized letter)." }, owner: "both", apostille: false, translation: false, critical: true, dependsOn: [] },
+          { id: "d6", title: { ko: "범죄경력증명서 (무범죄 증명)", en: "Criminal record certificate" }, detail: { ko: "경찰청 또는 정부24에서 영문 발급. 발급 후 90일 유효. 아포스티유 필수.", en: "Issue in English from National Police Agency or Government24. Valid 90 days from issue. Apostille required." }, owner: "jihyun", apostille: true, translation: false, critical: true, dependsOn: [] },
+          { id: "d7", title: { ko: "건강보험 증명서 (국제보험, €30,000+)", en: "Health insurance certificate (international, €30k+)" }, detail: { ko: "포르투갈 포함 해외 의료비 보장. 최소 1년, €30,000 이상. 추천: 삼성화재·현대해상·AXA·Allianz. 영문 증명서 발급 필수.", en: "Must cover medical expenses including Portugal. Min 1 year, €30k. Recommended: Samsung Fire, Hyundai Marine, AXA, Allianz. English certificate required." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "d8", title: { ko: "사유서 (Cover Letter, 영문)", en: "Cover Letter (English)" }, detail: { ko: "왜 포르투갈에 거주하고 싶은지, 월세 수익의 안정성 상세 기재. 파트너(Bruno)와의 관계 명시 권장.", en: "Explain why you want to live in Portugal and the stability of your rental income. Recommend mentioning your relationship with Bruno." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "d9", title: { ko: "재정계획서 (Letter of Intent, 영문)", en: "Letter of Intent (English)" }, detail: { ko: "생활비·소득원·세금 계획 설명. 한국 임대소득 + 포르투갈 예상 지출 + DTA 세금 구조 포함.", en: "Outline living expenses, income sources, and tax plan. Include Korean rental income + Portuguese expected expenses + DTA structure." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "d10", title: { ko: "여권용 사진 2장", en: "2 passport-size photos" }, detail: { ko: "최근 6개월 이내 촬영. 여권 규격 2장.", en: "Taken within 6 months. Passport size, 2 copies." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "d11", title: { ko: "비행기 예약 확인서 (Flight Reservation)", en: "Flight reservation confirmation" }, detail: { ko: "결제 완료 항공권이 아닌 '예약 확인서'. 방법①: Onward Ticket 서비스 (1~2만원, 48~72시간 유효). 방법②: 무료취소 티켓을 3~4개월 뒤 날짜로 예약.", en: "Not a confirmed ticket — a reservation confirmation. Option 1: Onward Ticket service (~₩10–20k, valid 48–72h). Option 2: Book a free-cancellation ticket 3–4 months out." }, owner: "online", apostille: false, translation: false, critical: false, dependsOn: [] },
+        ],
+      },
+      {
+        id: "apostille", title: { ko: "🔏 아포스티유 & 번역", en: "🔏 Apostille & Translation" },
+        items: [
+          { id: "ap1", title: { ko: "공인번역 — 수동소득 증빙 서류 등", en: "Certified translation of income proof docs" }, detail: { ko: "공인번역사 또는 법무사. 소요: 1~2일. 대상: 수동소득 증빙 서류 일체, 소득금액증명원.", en: "Certified translator or legal notary. Takes 1–2 days. Applies to income proof documents and income certificate." }, owner: "jihyun", apostille: false, translation: true, critical: false, dependsOn: [] },
+          { id: "ap2", title: { ko: "공증 (Notarization) — 번역문 진본 인증", en: "Notarization of translated documents" }, detail: { ko: "공증사무소 또는 법무사무소. 소요: 1일.", en: "Notary office or legal office. Takes 1 day." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["ap1"] },
+          { id: "ap3", title: { ko: "아포스티유 인증 신청", en: "Apply for Apostille certification" }, detail: { ko: "외교부 아포스티유센터 (서울 정부서울청사 별관) 또는 온라인 신청. 소요: 2~3일. 대상: 범죄경력증명서, 수동소득 증빙, 은행 잔고 증명서, 영문 주민등록등본.", en: "Ministry of Foreign Affairs Apostille Center (Seoul) or online. Takes 2–3 days. Applies to: criminal record, income proof, bank balance certificate, English residence certificate." }, owner: "jihyun", apostille: true, translation: false, critical: false, dependsOn: ["ap2", "d6"] },
+          { id: "ap4", title: { ko: "서류 디지털 백업 (Google Drive / iCloud)", en: "Digital backup of all documents" }, detail: { ko: "모든 원본 서류 고해상도 스캔. 폴더별 정리 & 암호화 저장.", en: "High-resolution scan of all originals. Organize by folder and store encrypted." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+        ],
+      },
+      {
+        id: "tax", title: { ko: "💰 세금 & 재정 계획", en: "💰 Tax & Financial Planning" },
+        items: [
+          { id: "t1", title: { ko: "한국 임대소득 세금 신고 & 영문 납부증명서 발급", en: "Korean rental income tax filing & English payment certificate" }, detail: { ko: "임대계약서 + 입금내역 + 납부영수증 보관. 한국 임대소득세 납부 후 영문 납부증명서 발급 (포르투갈 IRS DTA 공제 적용용).", en: "Keep lease contract + payment records + tax receipts. After paying Korean rental income tax, get English payment certificate for DTA credit in Portuguese IRS." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "t2", title: { ko: "NHR 세제 혜택 사전 조사 & 세무사 상담", en: "NHR tax benefit research & tax advisor consultation" }, detail: { ko: "최근 5년간 포르투갈 세금 거주 이력 없으면 10년간 해외소득 0~10% 세율. 거주허가 후 다음 해 3월 31일까지 신청. 기한 놓치면 영구 소멸.", en: "If no PT tax residency in last 5 years: 0–10% rate on foreign income for 10 years. Apply by March 31 of the year after getting residence permit. Missing deadline = permanent loss." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: [] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 1,
+    collections: [
+      {
+        id: "embassy_visit", title: { ko: "🏛️ 대사관 접수", en: "🏛️ Embassy Submission" },
+        items: [
+          { id: "v1", title: { ko: "주한 포르투갈 대사관 온라인 예약", en: "Book appointment at Portuguese Embassy Seoul" }, detail: { ko: "서울 용산구 소재. 온라인 예약 필수. 대기 2~4주 소요. 사전 이메일 문의 권장.", en: "Located in Yongsan-gu, Seoul. Online booking required. 2–4 week wait. Email inquiries recommended." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "v2", title: { ko: "서류 최종 점검 & 제출 (11종)", en: "Final document check & submission (11 items)" }, detail: { ko: "여권·신청서·수동소득증빙·잔고증명·거주지계약서·범죄경력·보험·사유서·재정계획서·사진·항공예약. 원본 + 사본 각 2부.", en: "Passport, application, income proof, bank balance, rental contract, criminal record, insurance, cover letter, letter of intent, photos, flight reservation. Original + 2 copies each." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["v1"] },
+          { id: "v3", title: { ko: "비자 신청 수수료 납부 (€90~120)", en: "Pay visa application fee (€90–120)" }, detail: { ko: "접수 시 현지 통화 납부. 환불 불가 가능성 있으므로 서류 완비 후 접수.", en: "Pay in local currency at submission. Possibly non-refundable — confirm all docs are ready before submitting." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["v2"] },
+          { id: "v4", title: { ko: "심사 대기 (최대 60일)", en: "Wait for processing (up to 60 days)" }, detail: { ko: "공식 심사 기간 최대 60일. 추가 서류 요청 시 신속 대응. 재정 서류 유효기간 만료 시 재발급 준비.", en: "Official processing up to 60 days. Respond promptly to additional requests. Re-issue financial docs if they expire." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["v3"] },
+          { id: "v5", title: { ko: "D7 비자 스티커 수령", en: "Collect D7 visa sticker" }, detail: { ko: "여권에 D7 비자 스티커 부착. 유효기간 4개월, 복수입국 가능. 스티커 유효기간 내 포르투갈 입국 필수.", en: "D7 visa sticker affixed to passport. Valid 4 months, multiple entries. Must enter Portugal within the sticker validity period." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["v4"] },
+        ],
+      },
+      {
+        id: "depart", title: { ko: "✈️ 출국 준비", en: "✈️ Departure Prep" },
+        items: [
+          { id: "e1", title: { ko: "항공권 확정 예약 (인천 → 리스본)", en: "Book flight (Incheon → Lisbon)" }, detail: { ko: "비자 스티커 유효기간(4개월) 내 입국일 확인. 지참 서류: 여권+D7비자+거주지계약서 사본+보험 증명.", en: "Confirm entry date within visa sticker validity (4 months). Bring: passport + D7 visa + rental contract copy + insurance proof." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["v5"] },
+          { id: "e2", title: { ko: "포르투갈 현지 SIM 사전 조사", en: "Research Portuguese SIM card options" }, detail: { ko: "NOS, MEO, Vodafone PT 비교. 공항 도착 후 즉시 구매 가능. 데이터 무제한 요금제 확인.", en: "Compare NOS, MEO, Vodafone PT. Available at airport on arrival. Check unlimited data plans." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: [] },
+        ],
+      },
+    ],
+  },
+  {
+    id: 2,
+    collections: [
+      {
+        id: "admin", title: { ko: "🏛️ 행정 처리 (4개월 이내)", en: "🏛️ Administration (within 4 months)" },
+        items: [
+          { id: "a1", title: { ko: "AIMA 거주허가 신청 예약", en: "Book AIMA residence permit appointment" }, detail: { ko: "입국 후 4개월 이내 필수. AIMA 지역 사무소 예약. 거주허가 카드(2년) → 3년 갱신 → 5년 후 영주권.", en: "Must be done within 4 months of entry. Book at local AIMA office. Residence card (2yr) → 3yr renewal → permanent residency after 5yr." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "a2", title: { ko: "AIMA 제출 서류 준비", en: "Prepare AIMA submission documents" }, detail: { ko: "여권+비자+최근 3개월 통장+포르투갈 잔고증명+현지 보험+Finanças 등록 계약서+Atestado de Morada+NIF+NISS. 한국 납부세액 증명서는 아포스티유+번역 후 제출.", en: "Passport+visa+last 3 months bank statements+PT balance certificate+local insurance+Finanças-registered lease+Atestado de Morada+NIF+NISS. Korean tax certificate needs apostille+translation." }, owner: "both", apostille: true, translation: true, critical: false, dependsOn: ["a1"] },
+          { id: "a3", title: { ko: "Atestado de Morada (거주확인서) 발급", en: "Get Atestado de Morada (residency certificate)" }, detail: { ko: "거주지 관할 Junta de Freguesia 방문 발급. 이웃 2명의 증언 필요할 수 있음.", en: "Visit local Junta de Freguesia. May require testimony from 2 neighbors." }, owner: "bruno", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "a4", title: { ko: "임대차 계약서 Finanças 등록 확인", en: "Confirm lease is registered with Finanças" }, detail: { ko: "포르투갈 세무서(Finanças) 공식 등록 여부 확인 필수. 미등록 시 AIMA 심사 거절 가능. 파트너 집 동거 시 Aditamento(공동임차인 추가) 완료 확인.", en: "Must confirm official Finanças registration. Unregistered lease = possible AIMA rejection. If at partner's place, confirm Aditamento is done." }, owner: "bruno", apostille: false, translation: false, critical: true, dependsOn: [] },
+          { id: "a5", title: { ko: "NISS (사회보장번호) 발급", en: "Get NISS (Social Security number)" }, detail: { ko: "포르투갈 사회보장센터(Segurança Social) 방문 또는 온라인 신청.", en: "Visit Portuguese Social Security Center (Segurança Social) or apply online." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: [] },
+        ],
+      },
+      {
+        id: "tax3", title: { ko: "📊 세금 — NHR 신청", en: "📊 Tax — NHR Application" },
+        items: [
+          { id: "tx1", title: { ko: "NHR 세제 혜택 신청", en: "Apply for NHR tax benefit" }, detail: { ko: "거주허가 취득 후 다음 해 3월 31일까지 신청 필수. 기한 놓치면 영구 소멸. 10년간 해외소득 0~10% 세율. 세무사(AnchorLess, Bordr 등) 통해 진행 강력 권장.", en: "Must apply by March 31 of the year after getting residence permit. Missing deadline = permanent loss. 0–10% tax rate on foreign income for 10 years. Strongly recommend a tax advisor." }, owner: "both", apostille: false, translation: false, critical: true, dependsOn: ["a1"] },
+          { id: "tx2", title: { ko: "포르투갈 IRS 세금 신고 & DTA 공제 적용", en: "Portuguese IRS tax filing & DTA credit" }, detail: { ko: "한국 임대소득세 납부증명서(영문번역+아포스티유) 제출 → 포르투갈 IRS에서 DTA 차감. 한국에서는 다음 해 5월 외국납부세액공제신청서 첨부.", en: "Submit Korean rental tax payment certificate (English translation + apostille) → DTA credit in PT IRS. In Korea, attach foreign tax credit form in next May's filing." }, owner: "both", apostille: true, translation: true, critical: false, dependsOn: ["tx1"] },
+        ],
+      },
+      {
+        id: "insurance3", title: { ko: "🏥 보험 & 의료", en: "🏥 Insurance & Healthcare" },
+        items: [
+          { id: "h1", title: { ko: "한국 국제보험 1년간 유지 확인", en: "Confirm Korean international insurance for 1 year" }, detail: { ko: "대부분 D7 거주자는 첫 1년간 한국 보험 유지. 거주허가 갱신 조건: 유효한 건강보험 상시 유지 필수.", en: "Most D7 residents keep Korean insurance for the first year. Residence permit renewal condition: valid health insurance at all times." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "h2", title: { ko: "SNS (공공 의료시스템) 등록", en: "Register with SNS (public health system)" }, detail: { ko: "거주허가 취득 후 자동 자격 발생. 관할 보건소(Centro de Saúde) 방문 등록.", en: "Entitlement is automatic after residence permit. Visit local Centro de Saúde to register." }, owner: "bruno", apostille: false, translation: false, critical: false, dependsOn: ["a1"] },
+          { id: "h3", title: { ko: "현지 민간보험 비교 & 전환", en: "Compare & switch to local private insurance" }, detail: { ko: "Médis (월 €100 내외, Option 2 인기), Fidelidade, Multicare, Mgen (병력 미확인). 한국 보험에서 현지 전환 시점 결정.", en: "Médis (~€100/month, Option 2 popular), Fidelidade, Multicare, Mgen (no pre-existing conditions check). Decide when to switch from Korean insurance." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: [] },
+        ],
+      },
+      {
+        id: "life", title: { ko: "🏡 생활 정착", en: "🏡 Daily Life Setup" },
+        items: [
+          { id: "l3", title: { ko: "포르투갈 체류 기간 기록 관리", en: "Track Portugal stay duration" }, detail: { ko: "거주허가 첫 2년: 최소 12~16개월 체류 필요. 장기 출국 시 사전에 AIMA에 부재 사유 설명. 업무·문화 활동 근거 제시 시 예외 인정 가능.", en: "First 2 years: must stay 12–16 months minimum. Notify AIMA before long absences. Exceptions possible with proof of work/cultural activity." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "l4", title: { ko: "포르투갈 은행 계좌 현지 확인 & 송금 루트 설정", en: "Verify PT bank account locally & set up transfer route" }, detail: { ko: "한국에서 개설한 계좌 현지 지점 방문 확인. 한국 임대소득 정기 입금 루트 설정.", en: "Visit local branch to verify account opened in Korea. Set up regular transfer route for Korean rental income." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: [] },
+        ],
+      },
+    ],
+  },
+];
+
+const OWNER_META = {
+  jihyun: { emoji: "🇰🇷", color: "#FF3B30" },
+  bruno:  { emoji: "🇵🇹", color: "#007AFF" },
+  both:   { emoji: "👫", color: "#34C759" },
+  online: { emoji: "💻", color: "#8E8E93" },
+  embassy:{ emoji: "🏛️", color: "#FF9500" },
+};
+
+const allItemsOf = (phase) => phase.collections.flatMap((c) => c.items);
+const ITEM_TITLES = {};
+PHASES.forEach((p) => allItemsOf(p).forEach((item) => { ITEM_TITLES[item.id] = item.title; }));
+
+// ─── HOOKS ───────────────────────────────────────────────────────
+function useLS(key, init) {
+  const [val, setVal] = useState(() => {
+    try { const s = localStorage.getItem(key); return s !== null ? JSON.parse(s) : init; }
+    catch { return init; }
+  });
+  const set = useCallback((v) => {
+    const next = typeof v === "function" ? v(val) : v;
+    setVal(next);
+    try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
+  }, [key, val]);
+  return [val, set];
+}
+
+// ─── DATE HELPERS ────────────────────────────────────────────────
+function daysUntil(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr); target.setHours(0, 0, 0, 0);
+  return Math.round((target - today) / 86400000);
+}
+
+function formatDate(dateStr, lang) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (lang === "ko") return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+// ─── INLINE DEADLINE CONTROL ─────────────────────────────────────
+// Renders either:
+//  • a grey "+" chip (no deadline set) → clicking opens the hidden date input
+//  • a colored date chip (deadline set) → clicking opens the hidden date input to change/remove
+function InlineDeadline({ itemId, dateStr, lang, t, onSave, onRemove }) {
+  const inputRef = useRef(null);
+  const days = daysUntil(dateStr);
+  const overdue = days !== null && days < 0;
+  const isToday  = days === 0;
+  const urgent   = days !== null && days > 0 && days <= 14;
+
+  const openPicker = (e) => {
+    e.stopPropagation();
+    inputRef.current?.showPicker?.();
+    inputRef.current?.click();
+  };
+
+  const handleChange = (e) => {
+    e.stopPropagation();
+    const val = e.target.value;
+    if (val) onSave(itemId, val);
+  };
+
+  // Chip appearance
+  const hasDate = !!dateStr;
+  const chipColor = !hasDate ? "var(--label-tertiary)"
+    : overdue ? "var(--destructive)"
+    : (isToday || urgent) ? "#FF9500"
+    : "var(--label-tertiary)";
+  const chipBg = !hasDate ? "var(--bg-secondary)"
+    : overdue ? "var(--destructive-bg)"
+    : (isToday || urgent) ? "rgba(255,149,0,0.12)"
+    : "var(--bg-secondary)";
+
+  const chipLabel = !hasDate ? `+ ${t.setDeadline}`
+    : overdue ? `⏰ ${t.overdue}`
+    : isToday  ? `⏰ ${t.today}`
+    : urgent   ? `⏰ ${days}${t.daysLeft}`
+    : `📅 ${formatDate(dateStr, lang)}`;
+
+  return (
+    <span style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 2 }}>
+      {/* Visible chip */}
+      <button
+        onClick={openPicker}
+        style={{
+          display: "inline-flex", alignItems: "center",
+          background: chipBg, border: "none",
+          borderRadius: 6, padding: "2px 7px",
+          cursor: "pointer", lineHeight: 1.5,
+          fontSize: 11, fontWeight: hasDate ? 500 : 400,
+          color: chipColor,
+          transition: "background 0.15s",
+        }}
+      >
+        {chipLabel}
+      </button>
+
+      {/* Remove "×" — only when date is set */}
+      {hasDate && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemove(itemId); }}
+          style={{
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            width: 14, height: 14, borderRadius: "50%",
+            background: "var(--separator)", border: "none",
+            cursor: "pointer", padding: 0, flexShrink: 0,
+          }}
+        >
+          <svg width="7" height="7" viewBox="0 0 7 7" fill="none">
+            <path d="M1 1l5 5M6 1L1 6" stroke="var(--label-tertiary)" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+        </button>
+      )}
+
+      {/* Hidden native date input — zero-size, off-screen, triggered by chip click */}
+      <input
+        ref={inputRef}
+        type="date"
+        defaultValue={dateStr || ""}
+        onChange={handleChange}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: "absolute",
+          top: 0, left: 0,
+          width: 1, height: 1,
+          opacity: 0, overflow: "hidden",
+          pointerEvents: "none",
+        }}
+      />
+    </span>
+  );
+}
+
+// ─── PHASE TAB ───────────────────────────────────────────────────
+function PhaseTab({ phase, index, active, onClick, checked, lang, itemDeadlines }) {
+  const t = T[lang];
+  const items = allItemsOf(phase);
+  const done = items.filter((i) => checked[i.id]).length;
+  const pct = items.length ? Math.round((done / items.length) * 100) : 0;
+  const hasUrgent = items.some((i) => {
+    const d = daysUntil(itemDeadlines[i.id]);
+    return d !== null && d <= 14 && d >= 0 && !checked[i.id];
+  });
+  const isActive = active === index;
+
+  return (
+    <button onClick={() => onClick(index)} style={{
+      flex: 1, background: isActive ? "var(--bg-primary)" : "transparent",
+      border: "none", borderRadius: 10, padding: "8px 4px",
+      cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+      boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.10)" : "none",
+      transition: "all 0.18s ease", position: "relative",
+    }}>
+      {hasUrgent && (
+        <span style={{ position: "absolute", top: 5, right: 10, width: 7, height: 7, borderRadius: "50%", background: "#FF9500" }} />
+      )}
+      <span style={{ fontSize: 18 }}>{["🏛️", "🚪", "🌊"][index]}</span>
+      <span style={{ fontSize: 11, fontWeight: isActive ? 600 : 400, color: isActive ? "var(--label-primary)" : "var(--label-tertiary)", lineHeight: 1.2 }}>
+        {t.phases[index].title}
+      </span>
+      <span style={{ fontSize: 10, color: isActive ? "var(--accent)" : "var(--label-tertiary)", fontWeight: isActive ? 600 : 400 }}>
+        {pct}%
+      </span>
+    </button>
+  );
+}
+
+// ─── PROGRESS BAR ────────────────────────────────────────────────
+function ProgressBar({ done, total }) {
+  const pct = total ? (done / total) * 100 : 0;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ flex: 1, height: 4, borderRadius: 2, background: "var(--separator)", overflow: "hidden" }}>
+        <div style={{ height: "100%", borderRadius: 2, background: "var(--accent)", width: `${pct}%`, transition: "width 0.4s ease" }} />
+      </div>
+      <span style={{ fontSize: 13, color: "var(--label-secondary)", minWidth: 36, textAlign: "right" }}>
+        {done}/{total}
+      </span>
+    </div>
+  );
+}
+
+// ─── BADGE ───────────────────────────────────────────────────────
+function Badge({ children, color, bg }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: 11, fontWeight: 600, color, background: bg, borderRadius: 100, padding: "2px 7px", lineHeight: 1.4 }}>
+      {children}
+    </span>
+  );
+}
+
+// ─── ITEM CARD ───────────────────────────────────────────────────
+function ItemCard({ item, checked, onToggle, allChecked, lang, itemDeadlines, onSaveDeadline, onRemoveDeadline }) {
+  const [open, setOpen] = useState(false);
+  const t = T[lang];
+  const isDone = !!checked[item.id];
+  const isLocked = item.dependsOn.length > 0 && !item.dependsOn.every((dep) => allChecked[dep]);
+  const prereqTitles = item.dependsOn.filter((dep) => !allChecked[dep]).map((dep) => ITEM_TITLES[dep]?.[lang] || dep);
+
+  return (
+    <div style={{ background: "var(--bg-primary)", opacity: isLocked ? 0.42 : 1, transition: "opacity 0.2s" }}>
+      {/* Main row */}
+      <div onClick={() => setOpen((o) => !o)} style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 14px 10px", cursor: "pointer" }}>
+
+        {/* Checkbox */}
+        <button
+          onClick={(e) => { e.stopPropagation(); if (!isLocked) onToggle(item.id); }}
+          disabled={isLocked}
+          style={{
+            width: 22, height: 22, borderRadius: 11, flexShrink: 0,
+            border: isDone ? "none" : "1.5px solid var(--separator-strong)",
+            background: isDone ? "var(--accent)" : "transparent",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: isLocked ? "not-allowed" : "pointer",
+            transition: "all 0.15s", marginTop: 1,
+          }}
+        >
+          {isDone && <svg width="12" height="9" viewBox="0 0 12 9" fill="none"><path d="M1 4L4.5 7.5L11 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+          {isLocked && !isDone && (
+            <svg width="10" height="12" viewBox="0 0 10 12" fill="none">
+              <rect x="1" y="5" width="8" height="7" rx="1.5" stroke="var(--label-tertiary)" strokeWidth="1.5" />
+              <path d="M3 5V3.5a2 2 0 014 0V5" stroke="var(--label-tertiary)" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          )}
+        </button>
+
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Title row */}
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 5 }}>
+            <span style={{
+              fontSize: 15, fontWeight: 500, lineHeight: 1.35,
+              color: isDone ? "var(--label-tertiary)" : "var(--label-primary)",
+              textDecoration: isDone ? "line-through" : "none",
+              textDecorationColor: "var(--label-tertiary)",
+            }}>
+              {item.critical && <span style={{ color: "var(--destructive)", marginRight: 4, fontSize: 12 }}>★</span>}
+              {item.title[lang]}
+            </span>
+            <div style={{ color: "var(--label-tertiary)", flexShrink: 0, marginTop: 2, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            </div>
+          </div>
+
+          {/* Badges + deadline row */}
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 4 }}>
+            {item.apostille && <Badge color="var(--purple)" bg="var(--purple-bg)">🔏 {t.apostille}</Badge>}
+            {item.translation && <Badge color="var(--accent)" bg="var(--accent-bg)">📝 {t.translation}</Badge>}
+            <Badge color={OWNER_META[item.owner].color} bg={OWNER_META[item.owner].color + "18"}>
+              {OWNER_META[item.owner].emoji} {t.ownerLabels[item.owner]}
+            </Badge>
+
+            {/* Inline deadline — always visible when not done */}
+            {!isDone && (
+              <InlineDeadline
+                itemId={item.id}
+                dateStr={itemDeadlines[item.id] || null}
+                lang={lang} t={t}
+                onSave={onSaveDeadline}
+                onRemove={onRemoveDeadline}
+              />
+            )}
+          </div>
+
+          {/* Locked notice */}
+          {isLocked && prereqTitles.length > 0 && (
+            <div style={{ marginTop: 6 }}>
+              <span style={{ fontSize: 12, color: "var(--label-tertiary)" }}>
+                🔒 {t.requires}: {prereqTitles.join(", ")}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Detail — always accessible */}
+      {open && (
+        <div style={{ padding: "0 14px 14px 50px", borderTop: "1px solid var(--separator)", paddingTop: 10 }}>
+          <p style={{ fontSize: 14, color: "var(--label-secondary)", lineHeight: 1.65, margin: 0 }}>
+            {item.detail[lang]}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────────
+function useNotifications(itemDeadlines, lang) {
+  const [asked, setAsked] = useLS("d7-notif-asked", false);
+  const [showBanner, setShowBanner] = useState(false);
+  const firedRef = useRef(new Set());
+
+  useEffect(() => {
+    if (!asked && "Notification" in window && Notification.permission === "default") {
+      // Only prompt if there are upcoming deadlines
+      const hasAny = Object.values(itemDeadlines).some((d) => {
+        const days = daysUntil(d);
+        return days !== null && days >= 0 && days <= 14;
+      });
+      if (hasAny) setShowBanner(true);
+    }
+  }, [itemDeadlines, asked]);
+
+  const fireNotifications = useCallback(() => {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const t = T[lang];
+    PHASES.forEach((phase) => {
+      allItemsOf(phase).forEach((item) => {
+        const dateStr = itemDeadlines[item.id];
+        if (!dateStr) return;
+        const days = daysUntil(dateStr);
+        if (days === null || days < 0 || days > 14) return;
+        const key = `${item.id}-${dateStr}`;
+        if (firedRef.current.has(key)) return;
+        firedRef.current.add(key);
+        new Notification(t.notifTitle, {
+          body: t.notifBody(item.title[lang], days),
+          icon: "https://fav.farm/🇵🇹",
+          tag: key,
+        });
+      });
+    });
+  }, [itemDeadlines, lang]);
+
+  const allow = useCallback(() => {
+    setAsked(true);
+    setShowBanner(false);
+    Notification.requestPermission().then((p) => { if (p === "granted") fireNotifications(); });
+  }, [fireNotifications, setAsked]);
+
+  const deny = useCallback(() => { setAsked(true); setShowBanner(false); }, [setAsked]);
+
+  useEffect(() => { fireNotifications(); }, [fireNotifications]);
+
+  return { showBanner, allow, deny };
+}
+
+// ─── APP ─────────────────────────────────────────────────────────
+export default function App() {
+  const [lang, setLang]               = useLS("d7-lang", "ko");
+  const [checked, setChecked]         = useLS("d7-checked-v2", {});
+  const [itemDeadlines, setItemDeadlines] = useLS("d7-item-deadlines", {});  // { [itemId]: "YYYY-MM-DD" }
+  const [activePhase, setActivePhase] = useState(0);
+  const [filter, setFilter]           = useState("all");
+  const [toast, setToast]             = useState(null);
+  const darkMode = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches)[0];
+
+  const t = T[lang];
+  const phase = PHASES[activePhase];
+  const items = allItemsOf(phase);
+  const doneCount = items.filter((i) => checked[i.id]).length;
+
+  // Urgent items in current phase
+  const urgentItems = items.filter((i) => {
+    const d = daysUntil(itemDeadlines[i.id]);
+    return d !== null && d <= 14 && d >= 0 && !checked[i.id];
+  });
+
+  // Notifications
+  const { showBanner, allow, deny } = useNotifications(itemDeadlines, lang);
+
+  // Phase complete toast
+  useEffect(() => {
+    if (items.length > 0 && doneCount === items.length) {
+      setToast(t.toastComplete);
+      const tid = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(tid);
+    }
+  }, [doneCount, items.length, t.toastComplete]);
+
+  const toggle = useCallback((id) => {
+    setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, [setChecked]);
+
+  const saveDeadline = useCallback((itemId, date) => {
+    setItemDeadlines((prev) => ({ ...prev, [itemId]: date }));
+  }, [setItemDeadlines]);
+
+  const removeDeadline = useCallback((itemId) => {
+    setItemDeadlines((prev) => { const next = { ...prev }; delete next[itemId]; return next; });
+  }, [setItemDeadlines]);
+
+  // Filtering
+  const ownerFilter = filter.startsWith("owner:") ? filter.split(":")[1] : null;
+  const apostilleFilter = filter === "apostille";
+  const deadlineFilter = filter === "deadline";
+
+  const displayCollections = phase.collections.map((col) => ({
+    ...col,
+    items: col.items.filter((item) => {
+      if (apostilleFilter) return item.apostille || item.translation;
+      if (ownerFilter) return item.owner === ownerFilter;
+      if (deadlineFilter) return !!itemDeadlines[item.id];
+      return true;
+    }),
+  })).filter((col) => col.items.length > 0);
+
+  // CSS vars
+  const cssVars = darkMode ? {
+    "--bg-primary": "#1C1C1E", "--bg-secondary": "#2C2C2E", "--bg-app": "#000000",
+    "--label-primary": "#FFFFFF", "--label-secondary": "rgba(235,235,245,0.6)", "--label-tertiary": "rgba(235,235,245,0.3)",
+    "--separator": "rgba(84,84,88,0.65)", "--separator-strong": "rgba(84,84,88,0.9)",
+    "--accent": "#0A84FF", "--accent-bg": "rgba(10,132,255,0.15)",
+    "--destructive": "#FF453A", "--destructive-bg": "rgba(255,69,58,0.15)",
+    "--purple": "#BF5AF2", "--purple-bg": "rgba(191,90,242,0.15)",
+  } : {
+    "--bg-primary": "#FFFFFF", "--bg-secondary": "#F2F2F7", "--bg-app": "#F2F2F7",
+    "--label-primary": "#000000", "--label-secondary": "rgba(60,60,67,0.6)", "--label-tertiary": "rgba(60,60,67,0.3)",
+    "--separator": "rgba(60,60,67,0.18)", "--separator-strong": "rgba(60,60,67,0.36)",
+    "--accent": "#007AFF", "--accent-bg": "rgba(0,122,255,0.10)",
+    "--destructive": "#FF3B30", "--destructive-bg": "rgba(255,59,48,0.10)",
+    "--purple": "#AF52DE", "--purple-bg": "rgba(175,82,222,0.10)",
+  };
+
+  const filterBtns = [
+    { key: "all", label: t.filterAll },
+    { key: "apostille", label: `🔏 ${t.filterApostille}` },
+    { key: "deadline", label: `📅 ${t.filterDeadline}` },
+    { key: "owner:jihyun", label: `🇰🇷 ${t.ownerLabels.jihyun}` },
+    { key: "owner:bruno", label: `🇵🇹 ${t.ownerLabels.bruno}` },
+    { key: "owner:both", label: `👫 ${t.ownerLabels.both}` },
+  ];
+
+  return (
+    <div style={{ ...cssVars, background: "var(--bg-app)", minHeight: "100vh", fontFamily: "-apple-system,'SF Pro Text',system-ui,sans-serif" }}>
+      <style>{`
+        @keyframes fadeInDown { from{opacity:0;transform:translateX(-50%) translateY(-8px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+        @keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+        * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        ::-webkit-scrollbar { display:none; }
+        input[type="date"] { color-scheme: ${darkMode ? "dark" : "light"}; }
+      `}</style>
+
+      {/* Toast */}
+      {toast && (
+        <div style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", background: "var(--label-primary)", color: "var(--bg-primary)", borderRadius: 20, padding: "10px 20px", fontSize: 14, fontWeight: 600, zIndex: 300, boxShadow: "0 4px 20px rgba(0,0,0,0.25)", animation: "fadeInDown 0.25s ease", whiteSpace: "nowrap" }}>
+          {toast}
+        </div>
+      )}
+
+      {/* Notification banner */}
+      {showBanner && (
+        <div style={{ position: "fixed", bottom: 90, left: "50%", transform: "translateX(-50%)", width: "calc(100% - 32px)", maxWidth: 398, background: "var(--bg-primary)", borderRadius: 16, padding: "14px 16px", boxShadow: "0 4px 24px rgba(0,0,0,0.18)", zIndex: 200, animation: "slideUp 0.3s ease", border: "1px solid var(--separator)" }}>
+          <p style={{ margin: "0 0 12px", fontSize: 14, color: "var(--label-primary)", fontWeight: 500 }}>🔔 {t.notifRequest}</p>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={deny} style={{ flex: 1, padding: "9px", borderRadius: 10, border: "none", background: "var(--bg-secondary)", fontSize: 14, color: "var(--label-secondary)", cursor: "pointer" }}>{t.notifDeny}</button>
+            <button onClick={allow} style={{ flex: 1, padding: "9px", borderRadius: 10, border: "none", background: "var(--accent)", fontSize: 14, fontWeight: 600, color: "#fff", cursor: "pointer" }}>{t.notifAllow}</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ maxWidth: 430, margin: "0 auto", paddingBottom: 100 }}>
+
+        {/* Header */}
+        <div style={{ padding: "52px 20px 14px", position: "sticky", top: 0, zIndex: 10, background: "var(--bg-app)", borderBottom: "1px solid var(--separator)" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
+            <div>
+              <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, letterSpacing: -0.5, color: "var(--label-primary)", lineHeight: 1.15 }}>{t.appTitle}</h1>
+              <p style={{ margin: "3px 0 0", fontSize: 13, color: "var(--label-secondary)" }}>{t.appSub}</p>
+            </div>
+            <button onClick={() => setLang(lang === "ko" ? "en" : "ko")} style={{ background: "var(--bg-secondary)", border: "none", borderRadius: 8, padding: "4px 10px", fontSize: 13, fontWeight: 600, color: "var(--label-secondary)", cursor: "pointer" }}>
+              {lang === "ko" ? "EN" : "한"}
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: 4, background: "var(--bg-secondary)", borderRadius: 12, padding: 4 }}>
+            {PHASES.map((p, i) => (
+              <PhaseTab key={i} phase={p} index={i} active={activePhase}
+                onClick={(idx) => { setActivePhase(idx); setFilter("all"); }}
+                checked={checked} lang={lang} itemDeadlines={itemDeadlines} />
+            ))}
+          </div>
+        </div>
+
+        {/* Phase header */}
+        <div style={{ padding: "18px 20px 10px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "var(--label-primary)", letterSpacing: -0.3 }}>
+              {t.phases[activePhase].sub}
+            </h2>
+            <span style={{ fontSize: 13, color: "var(--label-secondary)" }}>
+              {doneCount} {t.of} {items.length} {t.complete}
+            </span>
+          </div>
+          <ProgressBar done={doneCount} total={items.length} />
+
+          {/* Urgent items summary */}
+          {urgentItems.length > 0 && (
+            <div style={{ marginTop: 10, padding: "8px 12px", background: "rgba(255,149,0,0.10)", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 13, color: "#FF9500", fontWeight: 500 }}>⏰ {t.urgentBanner(urgentItems.length)}</span>
+              <button onClick={() => setFilter("deadline")} style={{ fontSize: 12, color: "#FF9500", background: "none", border: "none", cursor: "pointer", fontWeight: 500, padding: 0 }}>
+                {t.filterDeadline} →
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Filter chips */}
+        <div style={{ display: "flex", gap: 7, padding: "4px 20px 14px", overflowX: "auto" }}>
+          {filterBtns.map((btn) => {
+            const isActive = filter === btn.key;
+            return (
+              <button key={btn.key} onClick={() => setFilter(btn.key)} style={{ flexShrink: 0, background: isActive ? "var(--accent)" : "var(--bg-secondary)", color: isActive ? "#FFFFFF" : "var(--label-secondary)", border: "none", borderRadius: 100, padding: "6px 13px", fontSize: 13, fontWeight: isActive ? 600 : 400, cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.15s" }}>
+                {btn.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Collections */}
+        <div style={{ padding: "0 16px" }}>
+          {displayCollections.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "60px 0", color: "var(--label-tertiary)", fontSize: 14 }}>{t.emptyFilter}</div>
+          ) : (
+            displayCollections.map((col) => (
+              <div key={col.id} style={{ marginBottom: 28 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8, padding: "0 4px" }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--label-secondary)" }}>{col.title[lang]}</span>
+                  <span style={{ fontSize: 12, color: "var(--label-tertiary)" }}>
+                    {col.items.filter((i) => checked[i.id]).length}/{col.items.length}
+                  </span>
+                </div>
+                <div style={{ background: "var(--bg-secondary)", borderRadius: 12, overflow: "hidden" }}>
+                  {col.items.map((item, idx) => (
+                    <div key={item.id}>
+                      {idx > 0 && <div style={{ height: 1, background: "var(--separator)", marginLeft: 50 }} />}
+                      <ItemCard
+                        item={item}
+                        checked={checked}
+                        onToggle={toggle}
+                        allChecked={checked}
+                        lang={lang}
+                        itemDeadlines={itemDeadlines}
+                        onSaveDeadline={saveDeadline}
+                        onRemoveDeadline={removeDeadline}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+          <p style={{ textAlign: "center", fontSize: 12, color: "var(--label-tertiary)", margin: "8px 0 16px" }}>{t.updated}</p>
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div style={{ position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)", width: "100%", maxWidth: 430, background: darkMode ? "rgba(0,0,0,0.88)" : "rgba(242,242,247,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid var(--separator)", padding: "12px 20px 30px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--label-secondary)" }}>{t.phases[activePhase].title}</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--accent)" }}>
+            {items.length ? Math.round((doneCount / items.length) * 100) : 0}%
+          </span>
+        </div>
+        <ProgressBar done={doneCount} total={items.length} />
+      </div>
+    </div>
+  );
+}
