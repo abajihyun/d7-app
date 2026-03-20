@@ -12,6 +12,30 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script>
+    try {
+      if (typeof firebase !== "undefined") {
+        firebase.initializeApp({
+          apiKey: "AIzaSyBn-UgnLu8qomk-uqHbcYDAJUE13q1T49I",
+          authDomain: "d7-app.firebaseapp.com",
+          databaseURL: "https://d7-app-default-rtdb.firebaseio.com",
+          projectId: "d7-app",
+          storageBucket: "d7-app.firebasestorage.app",
+          messagingSenderId: "552853030637",
+          appId: "1:552853030637:web:4fd32129008191c581eee4"
+        });
+        window._db = firebase.database();
+      } else {
+        window._db = null;
+      }
+    } catch(e) {
+      console.warn("Firebase init failed, running in offline mode:", e.message);
+      window._db = null;
+    }
+  </script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -128,8 +152,8 @@ const PHASES = [
           { id: "d4", title: { ko: "포르투갈 은행 잔고 증명서", en: "Portuguese bank balance certificate" }, detail: { ko: "최소 €10,000~15,000 이상 권장. NIF 발급 → 계좌 개설 → 송금 완료 후 영문 발급. 아포스티유 필요.", en: "Min €10,000–15,000 recommended. Get in English after NIF → account → transfer complete. Apostille required." }, owner: "online", apostille: true, translation: false, critical: true, dependsOn: ["n4"] },
           { id: "d5", title: { ko: "포르투갈 거주지 임대차 계약서", en: "Portuguese rental contract" }, detail: { ko: "최소 12개월 계약. 포르투갈 세무서(Finanças) 정식 등록 필수. 파트너 집 동거 시: Aditamento(공동임차인 등록) 또는 Termo de Responsabilidade(포르투갈어 공증) 중 선택.", en: "Min 12-month contract. Must be officially registered with Finanças. If living with partner: Aditamento (co-tenant) or Termo de Responsabilidade (notarized letter)." }, owner: "both", apostille: false, translation: false, critical: true, dependsOn: [] },
           { id: "d6", title: { ko: "범죄경력증명서 (무범죄 증명)", en: "Criminal record certificate" }, detail: { ko: "경찰청 또는 정부24에서 영문 발급. 발급 후 90일 유효. 아포스티유 필수.", en: "Issue in English from National Police Agency or Government24. Valid 90 days from issue. Apostille required." }, owner: "jihyun", apostille: true, translation: false, critical: true, dependsOn: [] },
-          { id: "d7", title: { ko: "건강보험 증명서 (국제보험, €30,000+)", en: "Health insurance certificate (international, €30k+)" }, detail: { ko: "포르투갈 포함 해외 의료비 보장. 최소 1년, €30,000 이상. ⚠️ co-payment(본인부담금) 조항 없는 플랜이어야 함 — 조항 있을 경우 대사관 거절 사례 있음. 추천: 삼성화재·현대해상·AXA·Allianz. 영문 증명서 발급 필수.\n💰 비용: 월 약 5~15만원 (플랜·나이에 따라 상이)", en: "Must cover medical expenses including Portugal. Min 1 year, €30k. ⚠️ Must have NO co-payment clause — plans with co-payments have been rejected by the embassy. Recommended: Samsung Fire, Hyundai Marine, AXA, Allianz. English certificate required.\n💰 Cost: ~₩50–150k/month depending on plan and age." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
-          { id: "ins_check", title: { ko: "보험 약관 co-payment 조항 없음 확인", en: "Confirm health insurance has no co-payment clause" }, detail: { ko: "가입한 국제보험의 약관에서 'co-payment', '자기부담금', '공제조항' 등의 표현이 없는지 확인. 영문 증명서에도 해당 내용이 명시되지 않아야 함. 불확실할 경우 보험사에 '비자용 영문 증명서, co-payment 없음 명시' 요청. ⚠️ 이 조건 미충족 시 대사관이 보험 서류를 거절할 수 있음.", en: "Check the policy for any 'co-payment', 'deductible', or 'excess' clauses — none should be present. The English certificate should also not mention co-payment terms. If unsure, ask the insurer to issue a letter explicitly stating no co-payment applies. ⚠️ Failing this check can result in the embassy rejecting your insurance document." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["d7"] },
+          { id: "d7", title: { ko: "[1단계] 여행자보험 가입 — 대사관 비자 신청용", en: "[Step 1] Travel insurance — for embassy visa application" }, detail: { ko: "대사관 비자 신청 시에는 여행자보험(Travel Insurance)으로 제출 가능. 필수 조건 4가지:\n① 보장 금액 €30,000 이상\n② 포르투갈 포함 쉥겐 지역 전역 유효\n③ 시신 송환(Repatriation) 비용 포함 — 영문 증명서에 'Repatriation' 문구가 명시되어야 함\n④ co-payment(본인부담금) 조항 없을 것\n\n📋 추천 보험사:\n• 한국 보험사: 삼성화재·현대해상·DB손해보험 — '해외장기체류보험' 또는 '유학보험' 상품. 영문 증명서 발급 시 Repatriation 문구 명시 가능 여부 반드시 확인\n• 국제 보험사: AXA Schengen (쉥겐 비자 전용, 명확한 영문 서류), Allianz Travel, Cigna Global — 대사관 제출 실적 많음. 취소 가능 12개월 플랜을 들고 포르투갈 도착 후 현지 건강보험으로 전환하는 방식도 일반적\n⚠️ 국민건강보험 불인정 — 반드시 민간보험 증명서 필요.\n💰 비용: 한국 보험사 월 약 5~15만원 / AXA·Allianz 등 연 €100~300 수준", en: "Travel insurance is accepted for the embassy visa application stage. 4 required conditions:\n① Coverage of €30,000+\n② Valid across Portugal and the full Schengen Area\n③ Repatriation costs included — the English certificate must explicitly state 'Repatriation'\n④ No co-payment clause\n\n📋 Recommended insurers:\n• Korean insurers: Samsung Fire, Hyundai Marine, DB Insurance — 'long-term overseas stay' or 'study abroad' plans. Must confirm English certificate explicitly states Repatriation\n• International insurers: AXA Schengen (dedicated Schengen visa product, clear English docs), Allianz Travel, Cigna Global — widely accepted by embassies. Many applicants get a cancellable 12-month policy, then switch to PT health insurance after arrival\n⚠️ Korean National Health Insurance is NOT accepted — must be private insurance.\n💰 Cost: Korean insurers ~₩50–150k/month / AXA·Allianz ~€100–300/year" }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "ins_check", title: { ko: "보험 약관 필수 조건 확인 (co-payment · Repatriation · waiting period)", en: "Confirm insurance meets all required conditions" }, detail: { ko: "영문 증명서 및 약관에서 아래 3가지 확인:\n① 'co-payment', '자기부담금', 'deductible', 'excess' 문구 없을 것\n② 'Repatriation' 또는 '시신 송환' 문구가 명시되어 있을 것\n③ 'waiting period(보장 대기기간)' 없을 것 — 특히 포르투갈 현지 보험 가입 시 암·임신 등 일부 항목에 30일~1년 대기기간이 적용될 수 있으므로 반드시 확인\n불확실할 경우 보험사에 '비자 제출용 영문 증명서, co-payment 없음 및 Repatriation 포함 명시' 요청. ⚠️ 3가지 조건 중 하나라도 미충족 시 대사관 또는 AIMA 단계에서 거절 가능.", en: "Check the English certificate and policy for these 3 conditions:\n① No 'co-payment', 'deductible', or 'excess' clauses\n② 'Repatriation' must be explicitly stated\n③ No waiting period — especially for Portuguese local insurance, some policies have 30-day to 1-year waiting periods for cancer, pregnancy etc.\nIf unsure, ask the insurer to issue a letter confirming: no co-payment, repatriation included. ⚠️ Failing any of these 3 conditions can result in rejection at the embassy or AIMA stage." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["d7"] },
           { id: "d8", title: { ko: "사유서 (Cover Letter, 영문)", en: "Cover Letter (English)" }, detail: { ko: "왜 포르투갈에 거주하고 싶은지, 월세 수익의 안정성 상세 기재. 파트너(Bruno)와의 관계 명시 권장.", en: "Explain why you want to live in Portugal and the stability of your rental income. Recommend mentioning your relationship with Bruno." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
           { id: "d9", title: { ko: "재정계획서 (Letter of Intent, 영문)", en: "Letter of Intent (English)" }, detail: { ko: "생활비·소득원·세금 계획 설명. 한국 임대소득 + 포르투갈 예상 지출 + DTA 세금 구조 포함.", en: "Outline living expenses, income sources, and tax plan. Include Korean rental income + Portuguese expected expenses + DTA structure." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
           { id: "d10", title: { ko: "여권용 사진 2장", en: "2 passport-size photos" }, detail: { ko: "최근 6개월 이내 촬영. 여권 규격 2장.", en: "Taken within 6 months. Passport size, 2 copies." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
@@ -162,7 +186,7 @@ const PHASES = [
         items: [
           { id: "v1", title: { ko: "주한 포르투갈 대사관 온라인 예약", en: "Book appointment at Portuguese Embassy Seoul" }, detail: { ko: "서울 용산구 소재. 온라인 예약 필수. 대기 2~4주 소요. 사전 이메일 문의 권장.", en: "Located in Yongsan-gu, Seoul. Online booking required. 2–4 week wait. Email inquiries recommended." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
           { id: "v2", title: { ko: "서류 최종 점검 & 제출 (11종)", en: "Final document check & submission (11 items)" }, detail: { ko: "여권·신청서·수동소득증빙·잔고증명·거주지계약서·범죄경력·보험·사유서·재정계획서·사진·항공예약. 원본 + 사본 각 2부.", en: "Passport, application, income proof, bank balance, rental contract, criminal record, insurance, cover letter, letter of intent, photos, flight reservation. Original + 2 copies each." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["v1"] },
-          { id: "v3", title: { ko: "비자 신청 수수료 납부", en: "Pay visa application fee" }, detail: { ko: "접수 시 현지 통화 납부. 환불 불가 가능성 있으므로 서류 완비 후 접수.\n💰 비용: D7 비자 신청비 약 €90 / 이후 AIMA 거주허가 접수비 약 €170 / AIMA 예약비 약 €156 (Phase 3에서 추가 발생)", en: "Pay in local currency at submission. Possibly non-refundable — confirm all docs are ready before submitting.\n💰 Cost: D7 visa fee ~€90 / AIMA residence permit fee ~€170 / AIMA appointment fee ~€156 (due in Phase 3)." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["v2"] },
+          { id: "v3", title: { ko: "비자 신청 수수료 납부", en: "Pay visa application fee" }, detail: { ko: "접수 시 현지 통화 납부. 환불 불가 가능성 있으므로 서류 완비 후 접수.\n⚠️ AIMA 수수료도 동일 원칙: Phase 3에서 AIMA 비용을 납부하면 10일 이내 서류 업로드 카운트다운이 시작됨. 서류가 모두 준비된 후 납부할 것.\n💰 비용: D7 비자 신청비 약 €90 / 이후 AIMA 거주허가 접수비 약 €170 / AIMA 예약비 약 €156 (Phase 3에서 추가 발생)", en: "Pay in local currency at submission. Possibly non-refundable — confirm all docs are ready.\n⚠️ Same rule applies to AIMA fees in Phase 3: once you pay, a 10-day document upload countdown begins. Only pay after all documents are fully prepared.\n💰 Cost: D7 visa fee ~€90 / AIMA residence permit fee ~€170 / AIMA appointment fee ~€156 (due in Phase 3)." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["v2"] },
           { id: "v4", title: { ko: "심사 대기 (최대 60일)", en: "Wait for processing (up to 60 days)" }, detail: { ko: "공식 심사 기간 최대 60일. 추가 서류 요청 시 신속 대응. 재정 서류 유효기간 만료 시 재발급 준비.", en: "Official processing up to 60 days. Respond promptly to additional requests. Re-issue financial docs if they expire." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["v3"] },
           { id: "v5", title: { ko: "D7 비자 스티커 수령", en: "Collect D7 visa sticker" }, detail: { ko: "여권에 D7 비자 스티커 부착. 유효기간 4개월, 복수입국 가능. 스티커 유효기간 내 포르투갈 입국 필수.", en: "D7 visa sticker affixed to passport. Valid 4 months, multiple entries. Must enter Portugal within the sticker validity period." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["v4"] },
         ],
@@ -183,10 +207,11 @@ const PHASES = [
         id: "admin", title: { ko: "🏛️ 행정 처리 (4개월 이내)", en: "🏛️ Administration (within 4 months)" },
         items: [
           { id: "a1", title: { ko: "AIMA 거주허가 신청 예약", en: "Book AIMA residence permit appointment" }, detail: { ko: "입국 후 4개월 이내 필수. AIMA 지역 사무소 예약. 거주허가 카드(2년) → 3년 갱신 → 5년 후 영주권.", en: "Must be done within 4 months of entry. Book at local AIMA office. Residence card (2yr) → 3yr renewal → permanent residency after 5yr." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: [] },
-          { id: "a2", title: { ko: "AIMA 제출 서류 준비", en: "Prepare AIMA submission documents" }, detail: { ko: "여권+비자+최근 3개월 통장+포르투갈 잔고증명+현지 보험+Finanças 등록 계약서+Atestado de Morada+NIF+NISS. 한국 납부세액 증명서는 아포스티유+번역 후 제출.", en: "Passport+visa+last 3 months bank statements+PT balance certificate+local insurance+Finanças-registered lease+Atestado de Morada+NIF+NISS. Korean tax certificate needs apostille+translation." }, owner: "both", apostille: true, translation: true, critical: false, dependsOn: ["a1"] },
+          { id: "a2", title: { ko: "AIMA 제출 서류 준비 & 업로드", en: "Prepare & upload AIMA submission documents" }, detail: { ko: "여권+비자+최근 3개월 통장+포르투갈 잔고증명+현지 보험+Finanças 등록 계약서+Atestado de Morada+NIF+NISS. 한국 납부세액 증명서는 아포스티유+번역 후 제출.\n⚠️ AIMA 비용 납부 후 10일 이내 업로드 완료 필수 — 납부 즉시 카운트다운 시작. 서류가 전부 준비된 후 납부할 것.\n📋 업로드 팁 (실거주자 경험): ① 항목이 미입력이면 접수 불가 → 딱 맞는 항목 없어도 관련 서류 어딘가에 반드시 업로드 ② 주소 증명은 임대차계약서+최근 1개월 현금영수증+세무용 주거지 증명서+공과금 6개월분 2종 ③ 전 페이지 공증된 여권 제출 ④ 반년치 은행 입출금 내역서 포함 ⑤ 세금 미납 없음 증명서도 함께 제출 권장 ⑥ PDF 압축 스캔으로 업로드", en: "Passport+visa+last 3 months bank statements+PT balance certificate+local insurance+Finanças-registered lease+Atestado de Morada+NIF+NISS. Korean tax certificate needs apostille+translation.\n⚠️ Once you pay AIMA fees, a 10-day upload countdown begins immediately. Only pay after all documents are ready.\n📋 Upload tips (from residents): ① Every field must be filled — upload docs in closest matching field even if not exact ② Address proof: lease + recent month's receipt + tax residency certificate + 6 months of 2 utility bills ③ Submit notarized copy of all passport pages ④ Include 6 months of bank statements ⑤ Add proof of no tax debt ⑥ Compress and upload as PDF." }, owner: "both", apostille: true, translation: true, critical: false, dependsOn: ["a1"] },
           { id: "a3", title: { ko: "Atestado de Morada (거주확인서) 발급", en: "Get Atestado de Morada (residency certificate)" }, detail: { ko: "거주지 관할 Junta de Freguesia 방문 발급. 이웃 2명의 증언 필요할 수 있음.", en: "Visit local Junta de Freguesia. May require testimony from 2 neighbors." }, owner: "bruno", apostille: false, translation: false, critical: false, dependsOn: [] },
           { id: "a4", title: { ko: "임대차 계약서 Finanças 등록 확인", en: "Confirm lease is registered with Finanças" }, detail: { ko: "포르투갈 세무서(Finanças) 공식 등록 여부 확인 필수. 미등록 시 AIMA 심사 거절 가능. 파트너 집 동거 시 Aditamento(공동임차인 추가) 완료 확인.", en: "Must confirm official Finanças registration. Unregistered lease = possible AIMA rejection. If at partner's place, confirm Aditamento is done." }, owner: "bruno", apostille: false, translation: false, critical: true, dependsOn: [] },
           { id: "a5", title: { ko: "NISS (사회보장번호) 발급", en: "Get NISS (Social Security number)" }, detail: { ko: "포르투갈 사회보장센터(Segurança Social) 방문 또는 온라인 신청.", en: "Visit Portuguese Social Security Center (Segurança Social) or apply online." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "a6", title: { ko: "거주허가 갱신 준비 — 소득 기준 & 세금 신고 확인", en: "Prepare for residence permit renewal — income & tax filing check" }, detail: { ko: "거주허가 갱신(2년 후)은 초기 비자 심사보다 까다롭다는 경험담 다수. 갱신 시에는 포르투갈 IRS 세금 신고 내역을 요청하며, 최저임금 기준 상승에 따라 소득 요건도 올라감.\n⚠️ 실거주자 조언: ① 포르투갈에서 발생하는 전세계 소득에 대해 IRS 신고·납부 의무 확인 ② 갱신 시점 기준 최신 최저소득 기준 재확인 (매년 상향) ③ 갱신용 서류 목록을 입국 후 1년 시점부터 미리 준비 시작 ④ 변호사 선임 여부 사전 검토", en: "Residence permit renewal (after 2 years) is reportedly stricter than the initial application. Renewal may require Portuguese IRS tax filing records, and the minimum income threshold rises with the minimum wage each year.\n⚠️ Advice from residents: ① Confirm IRS filing obligation for worldwide income ② Re-check the latest minimum income requirement at time of renewal (increases annually) ③ Start preparing renewal documents from around 1 year after entry ④ Consider hiring a lawyer for renewal." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: ["a1"] },
         ],
       },
       {
@@ -199,8 +224,9 @@ const PHASES = [
       {
         id: "insurance3", title: { ko: "🏥 보험 & 의료", en: "🏥 Insurance & Healthcare" },
         items: [
+          { id: "ins2", title: { ko: "[2단계] 포르투갈 민간건강보험 가입 — AIMA 거주허가 신청용", en: "[Step 2] Portuguese private health insurance — for AIMA residence permit" }, detail: { ko: "AIMA 거주허가 신청 시에는 여행자보험 불인정 — 반드시 포르투갈 민간 건강보험(Health Insurance)으로 교체 필요.\n💡 전략: 포르투갈 도착 직후 바로 가입 시작. waiting period를 감안해 AIMA 예약 2~3개월 전에는 반드시 가입 완료.\n\n📋 추천 보험사 (포르투갈 현지):\n• Médis (Ageas Group) — 시장점유율 1위(약 30%), 비제우 포함 전국 네트워크. Option 2 (~€51/월, 44세 기준)가 가성비 좋음. 앱으로 보험금 청구 가능. Millennium BCP 은행 계좌 보유 시 연계 가입 편리\n• Multicare (Fidelidade) — 포르투갈 최대 보험그룹 산하. 가족 플랜·암 케어 프로그램 강점. Caixa Geral de Depósitos(CGD) 계좌 보유 시 연계 가입 가능. 기본플랜 약 €26/월(44세 기준)\n• Allianz Saúde Portugal — 글로벌 브랜드, 입원·종양학 보장 강점. 기본플랜 약 €20/월~\n• MGEN — 병력·나이 관계없이 가입 용이, 고령자·기저질환자에게 유리\n• AdvanceCare (Tranquilidade/Generali) — 유연한 플랜 구성\n⚠️ 주의: 포르투갈 건강보험은 입원·수술에 1년 대기기간 적용되는 상품이 있으므로 가입 시 waiting period 항목 반드시 확인. NIF + 포르투갈 은행 계좌 필요.\n💰 비용: 월 약 €20~100+ (나이·플랜에 따라 상이)", en: "Travel insurance is NOT accepted for AIMA residence permit — must switch to Portuguese private health insurance.\n💡 Strategy: Start as soon as you arrive. Given waiting periods, have coverage in place at least 2–3 months before your AIMA appointment.\n\n📋 Recommended insurers (Portuguese local):\n• Médis (Ageas Group) — #1 market share (~30%), nationwide network including Viseu. Option 2 (~€51/month for age 44) is best value. Claims via app. Easy to set up via Millennium BCP bank\n• Multicare (Fidelidade) — subsidiary of Portugal's largest insurer. Strong family plans and cancer care. Can link through Caixa Geral de Depósitos (CGD) bank. Base plan ~€26/month (age 44)\n• Allianz Saúde Portugal — global brand, strong hospitalization and oncology coverage. From ~€20/month\n• MGEN — accepts pre-existing conditions and older applicants; good for those with health history\n• AdvanceCare (Tranquilidade/Generali) — flexible plan structures\n⚠️ Warning: some Portuguese health insurance plans apply a 1-year waiting period for hospitalization and surgery — always confirm waiting period terms before signing up. NIF + Portuguese bank account required.\n💰 Cost: ~€20–100+/month depending on age and plan" }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["a1"] },
           { id: "h1", title: { ko: "한국 국제보험 1년간 유지 확인", en: "Confirm Korean international insurance for 1 year" }, detail: { ko: "대부분 D7 거주자는 첫 1년간 한국 보험 유지. 거주허가 갱신 조건: 유효한 건강보험 상시 유지 필수.", en: "Most D7 residents keep Korean insurance for the first year. Residence permit renewal condition: valid health insurance at all times." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
-          { id: "h2", title: { ko: "SNS (공공 의료시스템) 등록", en: "Register with SNS (public health system)" }, detail: { ko: "거주허가 취득 후 자동 자격 발생. 관할 보건소(Centro de Saúde) 방문 등록.", en: "Entitlement is automatic after residence permit. Visit local Centro de Saúde to register." }, owner: "bruno", apostille: false, translation: false, critical: false, dependsOn: ["a1"] },
+          { id: "h2", title: { ko: "SNS (공공 의료시스템) 등록 & 가정의 배정", en: "Register with SNS & get family doctor assigned" }, detail: { ko: "거주허가 취득 후 자동 자격 발생. 관할 보건소(Centro de Saúde) 방문 등록.\n⚠️ 실거주자 경험: Junta에서 병원 가라, 병원에서 Junta 가라는 핑퐁 현상 흔함. 가정의(Family Doctor) 배정은 SNS 번호 발급 후 별도 신청 필요하며 현재 대기 기간 최대 2~4개월 소요.\n💡 전략: 거주허가 취득 후에도 사보험을 당분간 유지하는 것이 현실적. 영어 가능 사립 병원 이용 편리. SNS 가정의 배정 완료 후 사보험 전환 여부 결정 권장.", en: "Entitlement is automatic after residence permit. Visit local Centro de Saúde to register.\n⚠️ From residents: common to be sent back and forth between Junta and health center. Family doctor assignment requires a separate request after getting your SNS number — current wait time up to 2–4 months.\n💡 Strategy: Keep private insurance for a while after getting residence permit. Private clinics are English-friendly. Decide whether to cancel private insurance only after family doctor is confirmed." }, owner: "bruno", apostille: false, translation: false, critical: false, dependsOn: ["a1"] },
           { id: "h3", title: { ko: "현지 민간보험 비교 & 전환", en: "Compare & switch to local private insurance" }, detail: { ko: "Médis (월 €100 내외, Option 2 인기), Fidelidade, Multicare, Mgen (병력 미확인). 한국 보험에서 현지 전환 시점 결정.\n💰 비용: 월 약 €80~150 (나이·플랜에 따라 상이)", en: "Médis (~€100/month, Option 2 popular), Fidelidade, Multicare, Mgen (no pre-existing conditions check). Decide when to switch from Korean insurance.\n💰 Cost: ~€80–150/month depending on age and plan." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: [] },
         ],
       },
@@ -239,6 +265,83 @@ function useLS(key, init) {
     try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
   }, [key, val]);
   return [val, set];
+}
+
+// ─── FIREBASE DEADLINES HOOK ─────────────────────────────────────
+// 마감일만 Firebase에 저장 → 지현 & 브루노 실시간 공유
+// html이 업데이트돼도 Firebase 데이터는 유지됨
+// ─── FIREBASE SYNC HOOK ──────────────────────────────────────────
+// Firebase 사용 가능 → 실시간 클라우드 동기화
+// Firebase 사용 불가 (미리보기, 오프라인 등) → localStorage 폴백
+function useFirebaseValue(path, init) {
+  const lsKey = "d7-fb-" + path;
+  const [value, setValue] = useState(() => {
+    // Firebase 없을 때 localStorage에서 초기값 복원
+    try { const s = localStorage.getItem(lsKey); return s ? JSON.parse(s) : init; }
+    catch { return init; }
+  });
+  const [ready, setReady] = useState(false);
+  const ref = useRef(null);
+  const usingFB = useRef(false);
+
+  useEffect(() => {
+    const db = window._db;
+    if (!db) {
+      // Firebase 없음 → localStorage만 사용, 즉시 ready
+      setReady(true);
+      return;
+    }
+    usingFB.current = true;
+    ref.current = db.ref(path);
+    const handler = ref.current.on("value", (snap) => {
+      const data = snap.val() || init;
+      setValue(data);
+      setReady(true);
+    }, () => {
+      // 연결 오류 시 localStorage 폴백
+      usingFB.current = false;
+      setReady(true);
+    });
+    return () => ref.current && ref.current.off("value", handler);
+  }, [path]);
+
+  const setKey = useCallback((keyOrUpdater, val) => {
+    if (typeof keyOrUpdater === "function") {
+      setValue((prev) => {
+        const next = keyOrUpdater(prev);
+        if (usingFB.current && ref.current) {
+          ref.current.set(next);
+        } else {
+          try { localStorage.setItem(lsKey, JSON.stringify(next)); } catch {}
+        }
+        return next;
+      });
+    } else {
+      if (usingFB.current && ref.current) {
+        ref.current.child(keyOrUpdater).set(val);
+      } else {
+        setValue((prev) => {
+          const next = { ...prev, [keyOrUpdater]: val };
+          try { localStorage.setItem(lsKey, JSON.stringify(next)); } catch {}
+          return next;
+        });
+      }
+    }
+  }, [lsKey]);
+
+  const removeKey = useCallback((key) => {
+    if (usingFB.current && ref.current) {
+      ref.current.child(key).remove();
+    } else {
+      setValue((prev) => {
+        const next = { ...prev }; delete next[key];
+        try { localStorage.setItem(lsKey, JSON.stringify(next)); } catch {}
+        return next;
+      });
+    }
+  }, [lsKey]);
+
+  return { value, setKey, removeKey, ready };
 }
 
 // ─── DATE HELPERS ────────────────────────────────────────────────
@@ -546,8 +649,10 @@ function useNotifications(itemDeadlines, lang) {
 // ─── APP ─────────────────────────────────────────────────────────
 function App() {
   const [lang, setLang]               = useLS("d7-lang", "ko");
-  const [checked, setChecked]         = useLS("d7-checked-v2", {});
-  const [itemDeadlines, setItemDeadlines] = useLS("d7-item-deadlines", {});  // { [itemId]: "YYYY-MM-DD" }
+  // 체크 상태 + 마감일 모두 Firebase 실시간 동기화
+  const { value: checked,      setKey: setCheckedKey, ready: checkedReady }   = useFirebaseValue("checked", {});
+  const { value: itemDeadlines, setKey: saveDeadline, removeKey: removeDeadline, ready: deadlinesReady } = useFirebaseValue("deadlines", {});
+  const dbReady = checkedReady && deadlinesReady;
   const [activePhase, setActivePhase] = useState(0);
   const [filter, setFilter]           = useState("all");
   const [toast, setToast]             = useState(null);
@@ -577,16 +682,8 @@ function App() {
   }, [doneCount, items.length, t.toastComplete]);
 
   const toggle = useCallback((id) => {
-    setChecked((prev) => ({ ...prev, [id]: !prev[id] }));
-  }, [setChecked]);
-
-  const saveDeadline = useCallback((itemId, date) => {
-    setItemDeadlines((prev) => ({ ...prev, [itemId]: date }));
-  }, [setItemDeadlines]);
-
-  const removeDeadline = useCallback((itemId) => {
-    setItemDeadlines((prev) => { const next = { ...prev }; delete next[itemId]; return next; });
-  }, [setItemDeadlines]);
+    setCheckedKey(id, !checked[id]);
+  }, [setCheckedKey, checked]);
 
   // Filtering
   const ownerFilter = filter.startsWith("owner:") ? filter.split(":")[1] : null;
@@ -628,6 +725,13 @@ function App() {
     { key: "owner:bruno", label: `🇵🇹 ${t.ownerLabels.bruno}` },
     { key: "owner:both", label: `👫 ${t.ownerLabels.both}` },
   ];
+
+  // Firebase 연결 전 로딩 스피너
+  if (!dbReady) return (
+    <div style={{ ...cssVars, background: "var(--bg-app)", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div style={{ textAlign: "center", color: "var(--label-tertiary)", fontSize: 14 }}>🇵🇹</div>
+    </div>
+  );
 
   return (
     <div style={{ ...cssVars, background: "var(--bg-app)", minHeight: "100vh", fontFamily: "-apple-system,'SF Pro Text',system-ui,sans-serif" }}>
