@@ -154,8 +154,7 @@ const PHASES = [
           { id: "d6", title: { ko: "범죄경력증명서 (무범죄 증명)", en: "Criminal record certificate" }, detail: { ko: "경찰청 또는 정부24에서 영문 발급. 발급 후 90일 유효. 아포스티유 필수.", en: "Issue in English from National Police Agency or Government24. Valid 90 days from issue. Apostille required." }, owner: "jihyun", apostille: true, translation: false, critical: true, dependsOn: [] },
           { id: "d7", title: { ko: "[1단계] 여행자보험 가입 — 대사관 비자 신청용", en: "[Step 1] Travel insurance — for embassy visa application" }, detail: { ko: "대사관 비자 신청 시에는 여행자보험(Travel Insurance)으로 제출 가능. 필수 조건 4가지:\n① 보장 금액 €30,000 이상\n② 포르투갈 포함 쉥겐 지역 전역 유효\n③ 시신 송환(Repatriation) 비용 포함 — 영문 증명서에 'Repatriation' 문구가 명시되어야 함\n④ co-payment(본인부담금) 조항 없을 것\n\n📋 추천 보험사:\n• 한국 보험사: 삼성화재·현대해상·DB손해보험 — '해외장기체류보험' 또는 '유학보험' 상품. 영문 증명서 발급 시 Repatriation 문구 명시 가능 여부 반드시 확인\n• 국제 보험사: AXA Schengen (쉥겐 비자 전용, 명확한 영문 서류), Allianz Travel, Cigna Global — 대사관 제출 실적 많음. 취소 가능 12개월 플랜을 들고 포르투갈 도착 후 현지 건강보험으로 전환하는 방식도 일반적\n⚠️ 국민건강보험 불인정 — 반드시 민간보험 증명서 필요.\n💰 비용: 한국 보험사 월 약 5~15만원 / AXA·Allianz 등 연 €100~300 수준", en: "Travel insurance is accepted for the embassy visa application stage. 4 required conditions:\n① Coverage of €30,000+\n② Valid across Portugal and the full Schengen Area\n③ Repatriation costs included — the English certificate must explicitly state 'Repatriation'\n④ No co-payment clause\n\n📋 Recommended insurers:\n• Korean insurers: Samsung Fire, Hyundai Marine, DB Insurance — 'long-term overseas stay' or 'study abroad' plans. Must confirm English certificate explicitly states Repatriation\n• International insurers: AXA Schengen (dedicated Schengen visa product, clear English docs), Allianz Travel, Cigna Global — widely accepted by embassies. Many applicants get a cancellable 12-month policy, then switch to PT health insurance after arrival\n⚠️ Korean National Health Insurance is NOT accepted — must be private insurance.\n💰 Cost: Korean insurers ~₩50–150k/month / AXA·Allianz ~€100–300/year" }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
           { id: "ins_check", title: { ko: "보험 약관 필수 조건 확인 (co-payment · Repatriation · waiting period)", en: "Confirm insurance meets all required conditions" }, detail: { ko: "영문 증명서 및 약관에서 아래 3가지 확인:\n① 'co-payment', '자기부담금', 'deductible', 'excess' 문구 없을 것\n② 'Repatriation' 또는 '시신 송환' 문구가 명시되어 있을 것\n③ 'waiting period(보장 대기기간)' 없을 것 — 특히 포르투갈 현지 보험 가입 시 암·임신 등 일부 항목에 30일~1년 대기기간이 적용될 수 있으므로 반드시 확인\n불확실할 경우 보험사에 '비자 제출용 영문 증명서, co-payment 없음 및 Repatriation 포함 명시' 요청. ⚠️ 3가지 조건 중 하나라도 미충족 시 대사관 또는 AIMA 단계에서 거절 가능.", en: "Check the English certificate and policy for these 3 conditions:\n① No 'co-payment', 'deductible', or 'excess' clauses\n② 'Repatriation' must be explicitly stated\n③ No waiting period — especially for Portuguese local insurance, some policies have 30-day to 1-year waiting periods for cancer, pregnancy etc.\nIf unsure, ask the insurer to issue a letter confirming: no co-payment, repatriation included. ⚠️ Failing any of these 3 conditions can result in rejection at the embassy or AIMA stage." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["d7"] },
-          { id: "d8", title: { ko: "사유서 (Cover Letter, 영문)", en: "Cover Letter (English)" }, detail: { ko: "왜 포르투갈에 거주하고 싶은지, 월세 수익의 안정성 상세 기재. 파트너(Bruno)와의 관계 명시 권장.", en: "Explain why you want to live in Portugal and the stability of your rental income. Recommend mentioning your relationship with Bruno." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
-          { id: "d9", title: { ko: "재정계획서 (Letter of Intent, 영문)", en: "Letter of Intent (English)" }, detail: { ko: "생활비·소득원·세금 계획 설명. 한국 임대소득 + 포르투갈 예상 지출 + DTA 세금 구조 포함.", en: "Outline living expenses, income sources, and tax plan. Include Korean rental income + Portuguese expected expenses + DTA structure." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
+          { id: "d8", title: { ko: "사유서 & 재정계획서 (Cover Letter, 영문)", en: "Cover Letter & Financial Plan (English)" }, detail: { ko: "사유서와 재정계획서는 하나의 영문 서한으로 작성 가능. 포함할 내용:\n① 포르투갈 거주 이유 및 비제우 선택 배경\n② 수동소득(임대소득)의 안정성과 월 €920 이상 유지 근거\n③ 예상 생활비 내역 (렌트·생활비·보험 등)\n④ 한국·포르투갈 DTA 세금 구조 활용 계획\n⑤ 파트너(Bruno)와의 관계 및 현지 정착 기반 명시\n💡 별도로 제출해도 무방하나, 하나로 통합하면 심사관이 읽기 편함.", en: "Cover letter and financial plan can be combined into a single English letter. Include:\n① Reason for choosing Portugal and Viseu\n② Stability of passive income (rental) and basis for maintaining €920+/month\n③ Estimated monthly expenses (rent, living costs, insurance, etc.)\n④ Plan to utilise Korea-Portugal DTA tax structure\n⑤ Relationship with partner Bruno and local settlement basis\n💡 Can be submitted separately, but combining into one letter makes it easier for the reviewing officer." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
           { id: "d10", title: { ko: "여권용 사진 2장", en: "2 passport-size photos" }, detail: { ko: "최근 6개월 이내 촬영. 여권 규격 2장.", en: "Taken within 6 months. Passport size, 2 copies." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
           { id: "d11", title: { ko: "비행기 예약 확인서 (Flight Reservation)", en: "Flight reservation confirmation" }, detail: { ko: "결제 완료 항공권이 아닌 '예약 확인서'. 방법①: Onward Ticket 서비스 (1~2만원, 48~72시간 유효). 방법②: 무료취소 티켓을 3~4개월 뒤 날짜로 예약.", en: "Not a confirmed ticket — a reservation confirmation. Option 1: Onward Ticket service (~₩10–20k, valid 48–72h). Option 2: Book a free-cancellation ticket 3–4 months out." }, owner: "online", apostille: false, translation: false, critical: false, dependsOn: [] },
         ],
@@ -198,6 +197,12 @@ const PHASES = [
           { id: "e2", title: { ko: "포르투갈 현지 SIM 사전 조사", en: "Research Portuguese SIM card options" }, detail: { ko: "NOS, MEO, Vodafone PT 비교. 공항 도착 후 즉시 구매 가능. 데이터 무제한 요금제 확인.", en: "Compare NOS, MEO, Vodafone PT. Available at airport on arrival. Check unlimited data plans." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: [] },
         ],
       },
+      {
+        id: "insurance_prep", title: { ko: "🏥 포르투갈 건강보험 사전 가입", en: "🏥 Portuguese Health Insurance — Pre-arrival" },
+        items: [
+          { id: "ins2", title: { ko: "[2단계] 포르투갈 민간건강보험 가입 — AIMA 거주허가 신청용", en: "[Step 2] Portuguese private health insurance — for AIMA residence permit" }, detail: { ko: "AIMA 거주허가 신청 시에는 여행자보험 불인정 — 반드시 포르투갈 민간 건강보험(Health Insurance)으로 교체 필요.\n💡 전략: 포르투갈 도착 직후 바로 가입 시작. waiting period를 감안해 AIMA 예약 2~3개월 전에는 반드시 가입 완료. 비자 수령 후 입국 전이라도 온라인 가입 가능한 보험사 있음.\n\n📋 추천 보험사 (포르투갈 현지):\n• Médis (Ageas Group) — 시장점유율 1위(약 30%), 비제우 포함 전국 네트워크. Option 2 (~€51/월, 44세 기준)가 가성비 좋음. 앱으로 보험금 청구 가능. Millennium BCP 은행 계좌 보유 시 연계 가입 편리\n• Multicare (Fidelidade) — 포르투갈 최대 보험그룹 산하. 가족 플랜·암 케어 프로그램 강점. 기본플랜 약 €26/월(44세 기준)\n• Allianz Saúde Portugal — 글로벌 브랜드, 입원·종양학 보장 강점. 기본플랜 약 €20/월~\n• MGEN — 병력·나이 관계없이 가입 용이, 고령자·기저질환자에게 유리\n• AdvanceCare (Tranquilidade/Generali) — 유연한 플랜 구성\n⚠️ 주의: 포르투갈 건강보험은 입원·수술에 1년 대기기간 적용되는 상품이 있으므로 가입 시 waiting period 항목 반드시 확인. NIF + 포르투갈 은행 계좌 필요.\n💰 비용: 월 약 €20~100+ (나이·플랜에 따라 상이)", en: "Travel insurance is NOT accepted for AIMA residence permit — must switch to Portuguese private health insurance.\n💡 Strategy: Start as soon as you arrive in Portugal. Given waiting periods, have coverage in place at least 2–3 months before your AIMA appointment. Some insurers allow online sign-up before arrival.\n\n📋 Recommended insurers (Portuguese local):\n• Médis (Ageas Group) — #1 market share (~30%), nationwide network including Viseu. Option 2 (~€51/month for age 44) is best value. Claims via app. Easy to set up via Millennium BCP bank\n• Multicare (Fidelidade) — subsidiary of Portugal's largest insurer. Strong family plans and cancer care. Base plan ~€26/month (age 44)\n• Allianz Saúde Portugal — global brand, strong hospitalization and oncology coverage. From ~€20/month\n• MGEN — accepts pre-existing conditions and older applicants; good for those with health history\n• AdvanceCare (Tranquilidade/Generali) — flexible plan structures\n⚠️ Warning: some Portuguese health insurance plans apply a 1-year waiting period for hospitalization and surgery — always confirm waiting period terms before signing up. NIF + Portuguese bank account required.\n💰 Cost: ~€20–100+/month depending on age and plan" }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["v5"] },
+        ],
+      },
     ],
   },
   {
@@ -224,10 +229,8 @@ const PHASES = [
       {
         id: "insurance3", title: { ko: "🏥 보험 & 의료", en: "🏥 Insurance & Healthcare" },
         items: [
-          { id: "ins2", title: { ko: "[2단계] 포르투갈 민간건강보험 가입 — AIMA 거주허가 신청용", en: "[Step 2] Portuguese private health insurance — for AIMA residence permit" }, detail: { ko: "AIMA 거주허가 신청 시에는 여행자보험 불인정 — 반드시 포르투갈 민간 건강보험(Health Insurance)으로 교체 필요.\n💡 전략: 포르투갈 도착 직후 바로 가입 시작. waiting period를 감안해 AIMA 예약 2~3개월 전에는 반드시 가입 완료.\n\n📋 추천 보험사 (포르투갈 현지):\n• Médis (Ageas Group) — 시장점유율 1위(약 30%), 비제우 포함 전국 네트워크. Option 2 (~€51/월, 44세 기준)가 가성비 좋음. 앱으로 보험금 청구 가능. Millennium BCP 은행 계좌 보유 시 연계 가입 편리\n• Multicare (Fidelidade) — 포르투갈 최대 보험그룹 산하. 가족 플랜·암 케어 프로그램 강점. Caixa Geral de Depósitos(CGD) 계좌 보유 시 연계 가입 가능. 기본플랜 약 €26/월(44세 기준)\n• Allianz Saúde Portugal — 글로벌 브랜드, 입원·종양학 보장 강점. 기본플랜 약 €20/월~\n• MGEN — 병력·나이 관계없이 가입 용이, 고령자·기저질환자에게 유리\n• AdvanceCare (Tranquilidade/Generali) — 유연한 플랜 구성\n⚠️ 주의: 포르투갈 건강보험은 입원·수술에 1년 대기기간 적용되는 상품이 있으므로 가입 시 waiting period 항목 반드시 확인. NIF + 포르투갈 은행 계좌 필요.\n💰 비용: 월 약 €20~100+ (나이·플랜에 따라 상이)", en: "Travel insurance is NOT accepted for AIMA residence permit — must switch to Portuguese private health insurance.\n💡 Strategy: Start as soon as you arrive. Given waiting periods, have coverage in place at least 2–3 months before your AIMA appointment.\n\n📋 Recommended insurers (Portuguese local):\n• Médis (Ageas Group) — #1 market share (~30%), nationwide network including Viseu. Option 2 (~€51/month for age 44) is best value. Claims via app. Easy to set up via Millennium BCP bank\n• Multicare (Fidelidade) — subsidiary of Portugal's largest insurer. Strong family plans and cancer care. Can link through Caixa Geral de Depósitos (CGD) bank. Base plan ~€26/month (age 44)\n• Allianz Saúde Portugal — global brand, strong hospitalization and oncology coverage. From ~€20/month\n• MGEN — accepts pre-existing conditions and older applicants; good for those with health history\n• AdvanceCare (Tranquilidade/Generali) — flexible plan structures\n⚠️ Warning: some Portuguese health insurance plans apply a 1-year waiting period for hospitalization and surgery — always confirm waiting period terms before signing up. NIF + Portuguese bank account required.\n💰 Cost: ~€20–100+/month depending on age and plan" }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: ["a1"] },
           { id: "h1", title: { ko: "한국 국제보험 1년간 유지 확인", en: "Confirm Korean international insurance for 1 year" }, detail: { ko: "대부분 D7 거주자는 첫 1년간 한국 보험 유지. 거주허가 갱신 조건: 유효한 건강보험 상시 유지 필수.", en: "Most D7 residents keep Korean insurance for the first year. Residence permit renewal condition: valid health insurance at all times." }, owner: "jihyun", apostille: false, translation: false, critical: false, dependsOn: [] },
           { id: "h2", title: { ko: "SNS (공공 의료시스템) 등록 & 가정의 배정", en: "Register with SNS & get family doctor assigned" }, detail: { ko: "거주허가 취득 후 자동 자격 발생. 관할 보건소(Centro de Saúde) 방문 등록.\n⚠️ 실거주자 경험: Junta에서 병원 가라, 병원에서 Junta 가라는 핑퐁 현상 흔함. 가정의(Family Doctor) 배정은 SNS 번호 발급 후 별도 신청 필요하며 현재 대기 기간 최대 2~4개월 소요.\n💡 전략: 거주허가 취득 후에도 사보험을 당분간 유지하는 것이 현실적. 영어 가능 사립 병원 이용 편리. SNS 가정의 배정 완료 후 사보험 전환 여부 결정 권장.", en: "Entitlement is automatic after residence permit. Visit local Centro de Saúde to register.\n⚠️ From residents: common to be sent back and forth between Junta and health center. Family doctor assignment requires a separate request after getting your SNS number — current wait time up to 2–4 months.\n💡 Strategy: Keep private insurance for a while after getting residence permit. Private clinics are English-friendly. Decide whether to cancel private insurance only after family doctor is confirmed." }, owner: "bruno", apostille: false, translation: false, critical: false, dependsOn: ["a1"] },
-          { id: "h3", title: { ko: "현지 민간보험 비교 & 전환", en: "Compare & switch to local private insurance" }, detail: { ko: "Médis (월 €100 내외, Option 2 인기), Fidelidade, Multicare, Mgen (병력 미확인). 한국 보험에서 현지 전환 시점 결정.\n💰 비용: 월 약 €80~150 (나이·플랜에 따라 상이)", en: "Médis (~€100/month, Option 2 popular), Fidelidade, Multicare, Mgen (no pre-existing conditions check). Decide when to switch from Korean insurance.\n💰 Cost: ~€80–150/month depending on age and plan." }, owner: "both", apostille: false, translation: false, critical: false, dependsOn: [] },
         ],
       },
       {
@@ -387,6 +390,19 @@ function InlineDeadline({ itemId, dateStr, lang, t, onSave, onRemove }) {
     : urgent                        ? `⏰ ${days}${t.daysLeft}`
     :                                 `📅 ${formatDate(dateStr, lang)}`;
 
+  // 사용자가 실제로 날짜를 골랐는지 추적
+  // 브라우저가 캘린더 열릴 때 오늘 날짜를 자동으로 input value에 넣는 동작 방지
+  const pickedRef = useRef(false);
+
+  const handleChange = (e) => {
+    // mousedown/keydown 이벤트로 실제 선택 여부를 구분하기 어려우므로
+    // input 값이 바뀌기 직전 사용자가 명시적으로 날짜를 클릭했는지 확인
+    if (pickedRef.current && e.target.value) {
+      onSave(itemId, e.target.value);
+    }
+    pickedRef.current = false;
+  };
+
   return (
     <span
       onClick={(e) => e.stopPropagation()}
@@ -424,12 +440,15 @@ function InlineDeadline({ itemId, dateStr, lang, t, onSave, onRemove }) {
         </button>
       )}
 
-      {/* The actual date input — visually hidden, triggered by the label above */}
+      {/* Hidden date input — uncontrolled to avoid browser auto-filling today on open */}
       <input
         id={inputId}
         type="date"
-        value={dateStr || ""}
-        onChange={(e) => { if (e.target.value) onSave(itemId, e.target.value); }}
+        defaultValue={dateStr || ""}
+        onMouseDown={() => { pickedRef.current = true; }}
+        onKeyDown={() => { pickedRef.current = true; }}
+        onChange={handleChange}
+        onBlur={() => { pickedRef.current = false; }}
         onClick={(e) => e.stopPropagation()}
         style={{
           position: "absolute",
